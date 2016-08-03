@@ -1,0 +1,32 @@
+{
+	"cognitive.parse.problem.details": "I'm having problems understanding the name of your container. Try using *objectstorage container details <container>*",
+	"cognitive.parse.problem.retrieve": "I'm having problems understanding the name of your container or object. Try using *objectstorage retrieve <container> <object>*",
+
+	"help.objectstorage.container.list": "Lists the Object Storage containers.",
+	"help.objectstorage.container.details": "Lists the objects inside of <container> object storage container.  <container> is optional.  If omitted, you can select a container from a list.",
+	"help.objectstorage.retrieve.object": "Retrieves <object> object found in the container <container>.  Both <container> and <object> are optional.  If omitted, you will be prompted to select them.",
+
+	"objectstorage.select.none.option": "None of the above",
+	"objectstorage.missing.envs": "Required environment variable is missing.  Please set %s as described in the README.",
+
+	"objectstorage.list.containers": "Below is a list of your object storage containers.",
+	"objectstorage.list.containers.none": "No object storage containers found.",
+	"objectstorage.list.containers.error": "Failed to list object storage containers.",
+	"objectstorage.list.objects": "Below is a list of objects in the '%s' container",
+	"objectstorage.list.objects.none": "No objects found in '%s' container.",
+	"objectstorage.list.objects.error": "Failed to list objects in container.",
+
+	"objectstorage.container.not.found": "No container named '%s' exists.",
+	"objectstorage.container.prompt.select": "Select a container from the list below.",
+
+	"objectstorage.object.not.found": "No object named '%s' exists.",
+	"objectstorage.object.prompt.select": "Select an object from the list below.  Objects larger than 1 MB have been filtered.",
+
+	"objectstore.retrieve.object": "Sending object file '%s' to adapter.",
+	"objectstorage.retrieve.error": "Failed to retrieve object",
+	"objectstorage.retrieve.nosupported.adapter": "'%s' adapter does not currently support the objectstorage retrieve command.",
+
+	"conversation.timed.out": "Our conversation timed out.  You can try again later.",
+	"conversation.try.again.or.exit": "That is not one of the choices. Try again, or type *exit*.",
+	"conversation.try.again.yes.no": "That is not one of the choices. Try *yes* or *no*."
+}
