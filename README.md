@@ -1,3 +1,4 @@
+[![npm](https://img.shields.io/npm/v/hubot-ibmcloud-objectstorage.svg?maxAge=2592000)](https://www.npmjs.com/package/hubot-ibmcloud-objectstorage)
 # hubot-ibmcloud-objectstorage
 
 A Hubot script for managing Object Storage containers messages with [IBM Object Storage](https://console.ng.bluemix.net/catalog/services/object-storage/).
