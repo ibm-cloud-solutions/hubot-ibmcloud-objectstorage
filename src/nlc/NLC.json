@@ -1,56 +1,56 @@
-{   "name": "IBMcloudObjectStorage",
-    "version": "1.0",
-    "classes": [
-        {
+{
+	"name": "IBMcloudObjectStorage",
+	"version": "1.0",
+	"classes": [
+		{
 			"class": "objectstorage.container.details",
-            "decription": "Show details about an object storage container",
-            "emittarget": "objectstorage.container.details",
-            "texts": [
-					"Give me details on an object storage container",
-					"Details on the object storage container",
-					"Present the object storage container details"
-				],
-				"parameters" : [
-				  {
-						"name": "containername",
-						"type": "entity",
-						"prompt": "OK. What is the name of the container?"
-				  }
-				]
-        },
-		  {
-            "class": "objectstorage.container.list",
-            "description": "List the object storage containers",
-            "emittarget": "objectstorage.container.list",
-            "texts": [
-            	"List the object storage containers",
+			"description": "Show details about an object storage container",
+			"emittarget": "objectstorage.container.details",
+			"texts": [
+				"Give me details on an object storage container",
+				"Details on the object storage container",
+				"Present the object storage container details"],
+			"parameters" : [
+				{
+					"name": "containername",
+					"type": "entity",
+					"prompt": "OK. What is the name of the container?"
+				}
+			]
+		},
+		{
+			"class": "objectstorage.container.list",
+			"description": "List the object storage containers",
+			"emittarget": "objectstorage.container.list",
+			"texts": [
+				"List the object storage containers",
 				"Show me the object storage containers",
 				"What are the object storage containers"
-            ]
-        },
-		  {
+			]
+		},
+		{
 			"class": "objectstorage.retrieve.object",
 			"description": "Retrieve an object from object storage container",
 			"emittarget": "objectstorage.retrieve.object",
 			"texts": [
-			 	"Retrieve my object from a container",
+				"Retrieve my object from a container",
 				"Get an object from the container",
 				"Can I get the object from my container"
-			],
+				],
 			"parameters" : [
-			  {
+				{
 					"name": "containername",
 					"type": "entity",
 					"prompt": "OK. What is the name of the container?"
-			  },
-			  {
+				},
+				{
 					"name": "objectname",
 					"type": "entity",
 					"prompt": "OK. What is the name of the object?"
-			  }
-		  ]
-	  },
-	  {
+				}
+		  	]
+		},
+		{
 			"class": "objectstorage.container.help",
 			"description": "Help with object storage",
 			"emittarget": "objectstorage.container.help",
@@ -60,15 +60,15 @@
 				"Help me with objectstorage"
 			]
 		}
-    ],
-	"parameter.values" : [
-		{
-			"name": "containername",
-			"values": []
-		},
-		{
-			"name": "objectname",
-			"values": []
-		}
-	]
-}
+		],
+		"parameter.values" : [
+			{
+				"name": "containername",
+				"values": []
+			},
+			{
+				"name": "objectname",
+				"values": []
+			}
+		]
+	}
