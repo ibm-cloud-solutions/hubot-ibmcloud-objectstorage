@@ -138,7 +138,7 @@ ObjectStoreHelper.prototype.obtainContainerName = function(context, inputName) {
 		});
 };
 
-ObjectStoreHelper.prototype.obtainObjectName = function(context, containerName, inputName) {
+ObjectStoreHelper.prototype.obtainObjectName = function(context, containerName, originalInputName) {
 	if (!this.initializedSuccessfully()) {
 		return Promise.reject(i18n.__('objectstorage.missing.envs', this.missingEnv));
 	}
@@ -152,7 +152,8 @@ ObjectStoreHelper.prototype.obtainObjectName = function(context, containerName, 
 				return object.bytes <= MAX_FILE_SIZE;
 			});
 			const objectNames = _.map(smallerObjects, 'name');
-			if (inputName && inputName.length > 0) {
+			if (originalInputName && originalInputName.length > 0) {
+				let inputName = originalInputName.trim();
 				if (_.indexOf(objectNames, inputName) !== -1) {
 					return Promise.resolve(inputName);
 				}
