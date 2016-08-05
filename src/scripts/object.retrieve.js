@@ -71,7 +71,7 @@ module.exports = (robot, res) => {
 	});
 
 	// Fixed command match
-	const OBJECT_RETRIEVE_PATTERN = /objectstorage\sretrieve\s?(\S*)\s?(\S*)/i;
+	const OBJECT_RETRIEVE_PATTERN = /objectstorage\sretrieve\s?(\S*)\s?(.*)/i;
 	robot.respond(OBJECT_RETRIEVE_PATTERN, {id: 'objectstorage.retrieve.object'}, (res) => {
 		robot.logger.debug(`${TAG}: res.message.text=${res.message.text}.`);
 		processObjectRetrieve(robot, res, res.match[1], res.match[2]);
