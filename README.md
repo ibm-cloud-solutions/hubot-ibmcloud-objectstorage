@@ -1,6 +1,6 @@
-[![Coverage Status](https://coveralls.io/repos/github/ibm-cloud-solutions/hubot-ibmcloud-objectstorage/badge.svg?branch=cleanup)](https://coveralls.io/github/ibm-cloud-solutions/hubot-ibmcloud-objectstorage?branch=cleanup)
-[![Dependency Status](https://dependencyci.com/github/ibm-cloud-solutions/hubot-ibmcloud-objectstorage/badge)](https://dependencyci.com/github/ibm-cloud-solutions/hubot-ibmcloud-objectstorage)
 [![Build Status](https://travis-ci.org/ibm-cloud-solutions/hubot-ibmcloud-objectstorage.svg?branch=master)](https://travis-ci.org/ibm-cloud-solutions/hubot-ibmcloud-objectstorage)
+[![Coverage Status](https://coveralls.io/repos/github/ibm-cloud-solutions/hubot-ibmcloud-objectstorage/badge.svg?branch=master)](https://coveralls.io/github/ibm-cloud-solutions/hubot-ibmcloud-objectstorage?branch=master)
+[![Dependency Status](https://dependencyci.com/github/ibm-cloud-solutions/hubot-ibmcloud-objectstorage/badge)](https://dependencyci.com/github/ibm-cloud-solutions/hubot-ibmcloud-objectstorage)
 [![npm](https://img.shields.io/npm/v/hubot-ibmcloud-objectstorage.svg?maxAge=2592000)](https://www.npmjs.com/package/hubot-ibmcloud-objectstorage)
 
 # hubot-ibmcloud-objectstorage
