@@ -14,7 +14,8 @@
     "lint": "eslint src/**/*.js test/*.js index.js",
     "postinstall": "initDb src/nlc/NLC.json",
     "test": ". test/.env && mocha test",
-    "coverage": ". test/.env && istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage"
+    "coverage": ". test/.env && istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage",
+    "whisk": "source OpenWhisk/env && node OpenWhisk/actions/nlcTrainer.js"
   },
   "author": "ibm-cloud-solutions",
   "license": "Apache-2.0",
@@ -36,7 +37,9 @@
     "mocha": "^2.4.5",
     "mocha-sprinkles": "^2.2.1",
     "nock": "^8.0.0",
-    "rewire": "2.5.1"
+    "rewire": "2.5.1",
+    "watson-developer-cloud": "^1.12.4",
+    "cloudant": "^1.4.1"
   },
   "peerDependencies": {
     "hubot": "^2.19.0",
