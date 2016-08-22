@@ -19,7 +19,7 @@
 
 const path = require('path');
 const TAG = path.basename(__filename);
-const Helper = require('../lib/helper');
+const Helper = require('../lib/paramHelper');
 
 const i18n = new (require('i18n-2'))({
 	locales: ['en'],

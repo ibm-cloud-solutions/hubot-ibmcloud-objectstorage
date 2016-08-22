@@ -20,7 +20,7 @@
  */
 'use strict';
 
-const Helper = require('../lib/helper');
+const Helper = require('../lib/paramHelper');
 const path = require('path');
 const TAG = path.basename(__filename);
 const _ = require('lodash');

@@ -175,6 +175,8 @@ ObjectStoreHelper.prototype.obtainObjectName = function(context, containerName, 
 
 		})
 		.then((selectedObject) => {
+			if (_.isError(selectedObject))
+				return Promise.reject(selectedObject);
 			result.objectName = selectedObject;
 			return result;
 		});

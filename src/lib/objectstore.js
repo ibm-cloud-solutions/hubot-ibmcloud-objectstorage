@@ -282,11 +282,16 @@ ObjectStore.prototype.getObject = function(containerName, objectName) {
 			}).on('error', function(err) {
 				os.logger.error(`${TAG}: Object ${objectName} was not found in container ${containerName}.`, err);
 				reject(new Error(`Object ${objectName} was not found in container ${containerName}.`));
-			}).on('complete', function() {
-				resolve({
-					name: objectName,
-					path: path
-				});
+			}).on('complete', function(res) {
+				if (res.statusCode === 200) {
+					resolve({
+						name: objectName,
+						path: path
+					});
+				}
+				else {
+					reject(new Error(`Object ${objectName} could not be downloaded from container ${containerName}.`));
+				}
 			}).pipe(fs.createWriteStream(path, {
 				autoClose: true
 			}));

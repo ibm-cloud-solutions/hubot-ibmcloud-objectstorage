@@ -38,7 +38,6 @@
     "mocha-sprinkles": "^2.2.1",
     "nock": "^8.0.0",
     "rewire": "2.5.1",
-    "watson-developer-cloud": "^1.12.4",
     "cloudant": "^1.4.1"
   },
   "peerDependencies": {
@@ -54,13 +53,14 @@
     "index.js"
   ],
   "dependencies": {
-    "hubot-ibmcloud-cognitive-lib": ">=0.0.26",
+    "hubot-conversation": "^1.1.1",
     "hubot-ibmcloud-activity-emitter": ">=0.0.3",
+    "hubot-ibmcloud-cognitive-lib": ">=0.0.26",
     "hubot-ibmcloud-logger": ">=0.0.19",
     "hubot-ibmcloud-utils": ">=0.0.8",
-    "hubot-conversation": "^1.1.1",
     "lodash": "^4.13.1",
-    "request": "^2.73.0"
+    "request": "^2.73.0",
+    "watson-developer-cloud": "^2.1.4"
   },
   "keywords": [
     "hubot",
@@ -68,8 +68,8 @@
     "watson",
     "ibm",
     "slack",
-		"object storage",
-		"cloud",
-		"ibm cloud"
+    "object storage",
+    "cloud",
+    "ibm cloud"
   ]
 }

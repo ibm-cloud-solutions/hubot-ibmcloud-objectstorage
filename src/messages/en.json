@@ -22,6 +22,8 @@
 	"objectstorage.object.not.found": "No object named '%s' exists.",
 	"objectstorage.object.prompt.select": "Select an object from the list below.  Objects larger than 1 MB have been filtered.",
 
+	"objectstore.search.object": "The following files matched your search: ",
+
 	"objectstore.retrieve.object": "Sending object file '%s' to adapter.",
 	"objectstorage.retrieve.error": "Failed to retrieve object",
 	"objectstorage.retrieve.nosupported.adapter": "'%s' adapter does not currently support the objectstorage retrieve command.",
