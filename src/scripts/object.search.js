@@ -28,11 +28,6 @@ const _ = require('lodash');
 const activity = require('hubot-ibmcloud-activity-emitter');
 const NLCHelper = require('../lib/nlcHelper');
 
-const NLC_URL = process.env.VCAP_SERVICES_NATURAL_LANGUAGE_CLASSIFIER_0_CREDENTIALS_URL || process.env.HUBOT_WATSON_NLC_URL;
-const NLC_USERNAME = process.env.VCAP_SERVICES_NATURAL_LANGUAGE_CLASSIFIER_0_CREDENTIALS_USERNAME || process.env.HUBOT_WATSON_NLC_USERNAME;
-const NLC_PASSWORD = process.env.VCAP_SERVICES_NATURAL_LANGUAGE_CLASSIFIER_0_CREDENTIALS_PASSWORD || process.env.HUBOT_WATSON_NLC_PASSWORD;
-const NLC_CLASSIFIER = process.env.HUBOT_WATSON_NLC_OJBECTSTORAGE_CLASSIFIER || 'cloudbot-obj-storage-classifier';
-
 const NLC_SEARCH_CONFIDENCE_MIN = parseFloat(process.env.NLC_SEARCH_CONFIDENCE_MIN) || 0.25;
 const NLC_SEARCH_RESULT_LIMIT = parseInt(process.env.NLC_SEARCH_RESULT_LIMIT, 10) || 3;
 
@@ -65,6 +60,13 @@ module.exports = (robot, res) => {
 	}
 
 	const switchBoard = new Conversation(robot);
+	let context = {
+		res: res,
+		robot: robot,
+		switchBoard: switchBoard
+	};
+
+	let nlcHelper = new NLCHelper(context);
 
 	// Natural Language match
 	robot.on('objectstorage.search.object', (res, parameters) => {
@@ -78,7 +80,7 @@ module.exports = (robot, res) => {
 			robot.logger.error(`${TAG}: Error extracting container name from text [${res.message.text}].`);
 			robot.emit('ibmcloud.formatter', {
 				response: res,
-				message: i18n.__('cognitive.parse.problem.retrieve')
+				message: i18n.__('cognitive.parse.problem.search')
 			});
 		}
 	});
@@ -127,6 +129,15 @@ module.exports = (robot, res) => {
 			return;
 		}
 
+		if (!nlcHelper.initializedSuccessfully()) {
+			// Abort.  objectstore.js reported the error to adapter already.
+			robot.emit('ibmcloud.formatter', {
+				response: res,
+				message: i18n.__('objectstorage.missing.envs', nlcHelper.getMissingEnv())
+			});
+			return;
+		}
+
 		if (!helper.isAdapterSupported(robot.adapterName)) {
 			robot.emit('ibmcloud.formatter', {
 				response: res,
@@ -134,23 +145,6 @@ module.exports = (robot, res) => {
 			});
 			return;
 		}
-
-		let context = {
-			res: res,
-			robot: robot,
-			switchBoard: switchBoard
-		};
-
-		let nlcOptions = {
-			logger: robot.logger,
-			url: NLC_URL,
-			username: NLC_USERNAME,
-			password: NLC_PASSWORD,
-			version: 'v1',
-			classifierName: NLC_CLASSIFIER
-		};
-		let nlcHelper = new NLCHelper(nlcOptions);
-		// FIXME make sure that this command fails gracefully if username/pass not set for NLC
 
 		searchForObject(context, nlcHelper, searchPhrase)
 			.then((objectList) => {

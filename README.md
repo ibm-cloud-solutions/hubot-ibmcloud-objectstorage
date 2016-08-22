@@ -22,7 +22,7 @@ Steps for adding this to your existing hubot:
 1. `cd` into your hubot directory
 2. Install the Swift Object Storage functionality with `npm install hubot-ibmcloud-objectstorage --save`
 3. Add `hubot-ibmcloud-translate` to your `external-scripts.json`
-4. Add the necessary environment variables:
+4. Add the necessary environment variables for Object Storage
 ```
 export HUBOT_OBJECT_STORAGE_AUTH_URL=<URL>
 export HUBOT_OBJECT_STORAGE_USER_ID=<USER_ID>
@@ -30,8 +30,14 @@ export HUBOT_OBJECT_STORAGE_PASSWORD=<PASSWORD>
 export HUBOT_OBJECT_STORAGE_PROJECT_ID=<PROJECT_ID>
 export HUBOT_OBJECT_STORAGE_BLUEMIX_REGION=dallas
 ```
+5. If you would like to enable NLC search, you will need to configure the following NLC variables:
+```
+export HUBOT_WATSON_NLC_URL=<NLC_URL>
+export HUBOT_WATSON_NLC_USERNAME=<NLC_USERNAME>
+export HUBOT_WATSON_NLC_PASSWORD=<NLC_PASSWORD>
+```
 
-5. Start up your bot & off to the races!
+6. Start up your bot & off to the races!
 
 ## Commands
 - `hubot objectstorage help` - Show available commands in the ibmcloud objectstorage category.

@@ -1,6 +1,7 @@
 {
 	"cognitive.parse.problem.details": "I'm having problems understanding the name of your container. Try using *objectstorage container details <container>*",
 	"cognitive.parse.problem.retrieve": "I'm having problems understanding the name of your container or object. Try using *objectstorage retrieve <container> <object>*",
+	"cognitive.parse.problem.search": "I'm having problems understanding the search phrase. Try using *objectstorage search <searchPhrase>*",
 
 	"help.objectstorage.container.list": "Lists the Object Storage containers.",
 	"help.objectstorage.container.details": "Lists the objects inside of <container> object storage container.  <container> is optional.  If omitted, you can select a container from a list.",

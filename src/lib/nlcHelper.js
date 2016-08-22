@@ -8,6 +8,11 @@
 
 const watson = require('watson-developer-cloud');
 
+const NLC_URL = process.env.VCAP_SERVICES_NATURAL_LANGUAGE_CLASSIFIER_0_CREDENTIALS_URL || process.env.HUBOT_WATSON_NLC_URL;
+const NLC_USERNAME = process.env.VCAP_SERVICES_NATURAL_LANGUAGE_CLASSIFIER_0_CREDENTIALS_USERNAME || process.env.HUBOT_WATSON_NLC_USERNAME;
+const NLC_PASSWORD = process.env.VCAP_SERVICES_NATURAL_LANGUAGE_CLASSIFIER_0_CREDENTIALS_PASSWORD || process.env.HUBOT_WATSON_NLC_PASSWORD;
+const NLC_CLASSIFIER = process.env.HUBOT_WATSON_NLC_OJBECTSTORAGE_CLASSIFIER || 'cloudbot-obj-storage-classifier';
+
 /**
  * @param options Object with the following configuration.
  *        options.url = Watson NLC API URL (OPTIONAL, defaults to https://gateway.watsonplatform.net/natural-language-classifier/api)
@@ -20,19 +25,55 @@ const watson = require('watson-developer-cloud');
  *        options.training_data = ReadStream, typically created from a CSV file.  (OPTIONAL, if omitted training data will come from nlcDb)
  * @constructor
  */
-function NLCHelper(options) {
-	this.opts = options || {};
+function NLCHelper(context) {
+	this.opts = {};
 
-	this.opts.classifierName = options.classifierName || 'default-classifier';
-	this.opts.maxClassifiers = options.maxClassifiers || 3;
-	this.opts.classifierLanguage = options.language || 'en';
+	this.initSuccess = false;
 
-	this.nlc = watson.natural_language_classifier(this.opts);
-	this.logger = options.logger;
+	this.missingEnv;
+	if (!NLC_URL || NLC_URL.length === 0) {
+		this.missingEnv = 'NLC_URL';
+	}
+	else if (!NLC_USERNAME || NLC_USERNAME.length === 0) {
+		this.missingEnv = 'NLC_USERNAME';
+	}
+	else if (!NLC_PASSWORD || NLC_PASSWORD.length === 0) {
+		this.missingEnv = 'NLC_PASSWORD';
+	}
+	else if (!NLC_CLASSIFIER || NLC_CLASSIFIER.length === 0) {
+		this.missingEnv = 'NLC_CLASSIFIER';
+	}
+
+	if (!this.missingEnv) {
+		this.initSuccess = true;
+	}
+
+	this.logger = context.robot.logger;
 	if (!this.logger) {
 		throw new Error('Logger required when using NLCHelper');
 	}
+
+	this.opts = {
+		url: NLC_URL,
+		username: NLC_USERNAME,
+		password: NLC_PASSWORD,
+		version: 'v1',
+		classifierName: NLC_CLASSIFIER,
+		maxClassifiers: 3,
+		classifierLanguage: 'en'
+	};
+
+	if (!this.missingEnv)
+		this.nlc = watson.natural_language_classifier(this.opts);
 }
+
+NLCHelper.prototype.initializedSuccessfully = function() {
+	return this.initSuccess;
+};
+
+NLCHelper.prototype.getMissingEnv = function() {
+	return this.missingEnv;
+};
 
 /**
  * Returns classification data for a statement using the latest classifier available.
@@ -88,6 +129,7 @@ NLCHelper.prototype._getClassifier = function() {
 	else {
 		this.nlc.list({}, (err, response) => {
 			if (err) {
+				this.logger.error('Error getting available classifiers.', err);
 				dfd.reject('Error getting available classifiers.' + JSON.stringify(err, null, 2));
 			}
 			else {
@@ -129,9 +171,11 @@ NLCHelper.prototype._getClassifier = function() {
 							dfd.resolve(this.classifierTraining);
 						}
 						else {
+							this.logger.error(new Error(`No classifiers available under [${this.opts.classifierName}]`));
 							dfd.reject(`No classifiers available under [${this.opts.classifierName}]`);
 						}
 					}).catch((error) => {
+						this.logger.error('Error getting a classifier.', error);
 						dfd.reject('Error getting a classifier.' + JSON.stringify(error));
 					});
 				}
@@ -154,6 +198,7 @@ NLCHelper.prototype.classifierStatus = function(classifier_id) {
 			classifier_id: classifier_id
 		}, (err, status) => {
 			if (err) {
+				this.logger.error('Error while checking status of classifier ' + classifier_id, err);
 				dfd.reject('Error while checking status of classifier ' + classifier_id + JSON.stringify(err, null, 2));
 			}
 			else {
@@ -162,16 +207,14 @@ NLCHelper.prototype.classifierStatus = function(classifier_id) {
 					var duration = Math.floor((Date.now() - new Date(status.created)) / 60000);
 					status.duration = duration > 0 ? duration : 0;
 				}
+				this.logger.debug(`Classifier ${classifier_id} status: ${status}`);
 				dfd.resolve(status);
 			}
 		});
 	}
 	else {
-		this._getClassifier(true).then(function(status) {
-			dfd.resolve(status);
-		}).catch(function(err) {
-			dfd.reject(err);
-		});
+		this.logger.error('classifier_id is a required parameter');
+		dfd.reject(new Error('classifier_id is a required parameter'));
 	}
 	return dfd.promise;
 };
