@@ -14,11 +14,27 @@ function main(params) {
 	 *  @param {string} nlcUsername (required) - username for NLC
 	 *  @param {string} nlcPassword (required) - password for NLC
 	 *  @param {string} nlcUrl (required) - URL for NLC
+	 *  @param {string} logLevel (optional) - Set the log level used for this action.  Default is INFO.
 	 *  @param {string} nlcForceTraining (optional) - Set to "true" to skip training checks and force NLC training
+	 *  @param {string} NLC_LIMIT_NUM_CLASSES (optional) - Max # of class to train NLC with.
+	 *  @param {string} NLC_LIMIT_TEXT_LENGTH (optional) - Max length of training data statement.
+	 *  @param {string} NLC_LIMIT_MIN_RECORDS (optional) - Minimum # of training data records needed to train NLC.
+	 *  @param {string} NLC_LIMIT_MAX_RECORDS (optional) - Max # of records that can be used to train NLC.
+	 *
 	 */
 	const path = require('path');
 	const watson = require('watson-developer-cloud');
 	const Cloudant = require('cloudant');
+
+	var log4js = require('log4js');
+	log4js.configure({
+		appenders: [
+			{ type: "console" }
+		],
+		replaceConsole: true
+	});
+	var logger = log4js.getLogger();
+	logger.setLevel(params.logLevel || 'INFO');
 
 	const TAG = 'nlcTrainer';
 
@@ -34,7 +50,7 @@ function main(params) {
 			classifierName = params.nlcClassifier;
 		}
 
-		if (validateParams(params)) {
+		if (validateParams()) {
 			nlc = watson.natural_language_classifier({
 				url: params.nlcUrl,
 				username: params.nlcUsername,
@@ -49,7 +65,7 @@ function main(params) {
 			getExistingClassifiers().then((classifiers) => {
 				existingClassifiers = classifiers;
 
-				if (shouldTrain(existingClassifiers, params)) {
+				if (shouldTrain(existingClassifiers)) {
 					return trainNewClassifier();
 				} else {
 					return Promise.resolve();
@@ -67,7 +83,7 @@ function main(params) {
 	});
 
 	// True if all required params are set, else false.
-	function validateParams(params) {
+	function validateParams() {
 		const required = [
 			'cloudantUsername', 'cloudantPassword', 'cloudantDbName',
 			'nlcUsername', 'nlcPassword', 'nlcUrl'
@@ -75,9 +91,14 @@ function main(params) {
 
 		var allValid = true;
 
+		// Print params for debugging
+		for(var element in params) {
+			logger.debug(`${TAG}: param key: ${element} value: ${JSON.stringify(params[element])}`);
+		}
+
 		required.forEach((element) => {
 			if (!params[element] || !params[element].length) {
-				console.error(`${TAG}: Missing required param: ${element}`);
+				logger.info(`${TAG}: Missing required param: ${element}`);
 				allValid = false;
 			}
 		});
@@ -127,10 +148,10 @@ function main(params) {
 						});
 
 						Promise.all(promises).then(() => {
-							console.log(`${TAG}: found the following ${classifiers.length} existing classifiers.`);
+							logger.info(`${TAG}: found the following ${classifiers.length} existing classifiers.`);
 
 							classifiers.forEach((classifier) => {
-								console.log(`${TAG}: ${JSON.stringify(classifier)}`);
+								logger.info(`${TAG}: ${JSON.stringify(classifier)}`);
 							});
 
 							resolve(classifiers);
@@ -143,24 +164,35 @@ function main(params) {
 		});
 	}
 
+	// This method is used to verify that if training is triggered via OpenWhisk cloudant change feed, that the changed
+	// document has tags associated with it.  This is needed because the BluePic flow first creates the cloudant doc
+	// without tags then modifies the doc with the tags.  Without this check we would train NLC before the tags are available
+	// and the image that triggered training would not be added to the NLC training data.
+	function tagsInCloudant() {
+		return params['_id'] && params['_rev'] && params['type'] === 'image' && params['tags'];
+	}
+
 	// Decides if we should train.  Decision is based on the fact that we haven't created a new classifier in a while
 	// and no other classifier is currently training.
-	function shouldTrain(existingClassifiers, params) {
+	function shouldTrain(existingClassifiers) {
 		var shouldTrain = false;
 
 		if("true" === params.nlcForceTraining) {
-			console.log(`${TAG}: should train, because force training flag is set.`);
+			logger.info(`${TAG}: should train, because force training flag is set.`);
 			shouldTrain = true;
 		} else {
-			if (!existingClassifiers.length) {
-				console.log(`${TAG}: should train, because there are no preexisting classifiers.`);
+			if(!isLocalRun(params) && !tagsInCloudant()) {
+				logger.info(`${TAG}: should not train, because changed cloudant doc does not include tags.`);
+			}
+			else if (!existingClassifiers.length) {
+				logger.info(`${TAG}: should train, because there are no preexisting classifiers.`);
 				shouldTrain = true;
 			} else {
 				var mostRecent = existingClassifiers[0];
 				var timeDiff = new Date() - new Date(mostRecent.created);
 
 				if (timeDiff < trainingFrequency) {
-					console.log(`${TAG}: should not train, because training frequency was not exceeded.  Last trained: ${mostRecent.created}`);
+					logger.info(`${TAG}: should not train, because training frequency was not exceeded.  Last trained: ${mostRecent.created}`);
 				} else {
 					var alreadyTraining = false;
 					existingClassifiers.forEach((classifier) => {
@@ -170,9 +202,9 @@ function main(params) {
 					});
 
 					if (alreadyTraining) {
-						console.log(`${TAG}: should not train, because classifier is already training.`);
+						logger.info(`${TAG}: should not train, because classifier is already training.`);
 					} else {
-						console.log(`${TAG}: should train, because all conditions are met.`);
+						logger.info(`${TAG}: should train, because all conditions are met.`);
 						shouldTrain = true;
 					}
 				}
@@ -183,33 +215,56 @@ function main(params) {
 		return shouldTrain;
 	}
 
+	// Adds training data to the provided array using the provided URL segments to generate the class.
+	// Format supported by nlc train: '[{ text: "my-text", classes:["my-class1", "my-class2",...]}, {}, ...]'
+	function addTrainingData(docId, array, url_segments, training_text) {
+		var NLC_LIMIT_TEXT_LENGTH = params.NLC_LIMIT_TEXT_LENGTH || 1024;
+
+		if(!training_text || !training_text.length) {
+			logger.warn(`${TAG}: WARNING - omitting empty training text.  Cloudant doc id: ${docId}`);
+			return;
+		}
+		else if(training_text.length > NLC_LIMIT_TEXT_LENGTH) {
+			logger.warn(`${TAG}: WARNING - image tag too long to use with NLC.  Cloudant doc id: ${docId}`);
+			return;
+		}
+
+		var nlcClass = '/' + url_segments.slice(-2).join('/'); // take last 2 segments for BluePic generated URL.
+		var trainingStatement = {
+			text: training_text,
+			classes: [nlcClass]
+		};
+
+		logger.debug(`${TAG}: training statement - ${JSON.stringify(trainingStatement)}`);
+		array.push(trainingStatement);
+	}
+
 	// Retrieve image metdata that BluePic stores in cloudant and construct training data for NLC.
 	// NOTE: This method is very specific to BluePic app.
 	function getTrainingData() {
 		return new Promise((resolve, reject) => {
-			console.log(`${TAG}: retrieving metadata from cloudant to generate training data...`);
+			logger.info(`${TAG}: retrieving metadata from cloudant to generate training data...`);
 
 			var trainingData = [];
 
 			// NLC has several limits regarding training data.  see: https://www.ibm.com/watson/developercloud/doc/nl-classifier/data_format.shtml
-			var NLC_LIMIT_NUM_CLASSES = 500;
-			var NLC_LIMIT_TEXT_LENGTH = 1024;
-			var NLC_LIMIT_MIN_RECORDS = 5;
-			var NLC_LIMIT_MAX_RECORDS = 15000;
+			var NLC_LIMIT_NUM_CLASSES = params.NLC_LIMIT_NUM_CLASSES || 500;
+			var NLC_LIMIT_MIN_RECORDS = params.NLC_LIMIT_MIN_RECORDS || 5;
+			var NLC_LIMIT_MAX_RECORDS = params.NLC_LIMIT_MAX_RECORDS || 15000;
 
-			var params = {
+			var options = {
 				limit: NLC_LIMIT_NUM_CLASSES * 2,  // times 2 because the view includes the image and user docs.
 				include_docs: true
 			};
 
 			// This is a view provided by BluePic, it returns 2 type of objects: the image object and the user object for each image.
-			cloudantDb.view('main_design', 'images', params, function(err, body) {
+			cloudantDb.view('main_design', 'images', options, function(err, body) {
 				if (err) {
 					reject(err);
 				}
 				else {
-					if(body.total_rows > params.limit) {
-						console.log(`${TAG}: WARNING - cloudant contains more image than supported for NLC training.  NLC will not be trained for all images.`);
+					if(body.total_rows > options.limit) {
+						logger.warn(`${TAG}: WARNING - cloudant contains more image than supported for NLC training.  NLC will not be trained for all images.`);
 					}
 
 					var imageDocs = body.rows.filter((element) => {
@@ -225,7 +280,7 @@ function main(params) {
 						return;
 					}
 					else if(imageDocs.length > NLC_LIMIT_NUM_CLASSES) {
-						console.log(`${TAG}: WARNING - cloudant returned more image than supported for NLC training.  NLC will not be trained for all images.`);
+						logger.warn(`${TAG}: WARNING - cloudant returned more image than supported for NLC training.  NLC will not be trained for all images.`);
 						imageDocs = imageDocs.slice(0, NLC_LIMIT_NUM_CLASSES);
 					}
 
@@ -237,25 +292,19 @@ function main(params) {
 						}
 
 						if(!url_segments || url_segments.length < 2) {
-							console.log(`${TAG}: WARNING - image metadata in cloudant does not have valid url.  Cloudant doc id: ${doc.id}`);
+							logger.warn(`${TAG}: WARNING - image metadata in cloudant does not have valid url.  Cloudant doc id: ${doc.id}`);
 						} else {
+							// Include training data from different doc fields of interest.
+							if(doc.caption) {
+								addTrainingData(doc.id, trainingData, url_segments, doc.caption);
+							}
+
+							if(doc.location && doc.location.name) {
+								addTrainingData(doc.id, trainingData, url_segments, doc.location.name);
+							}
+
 							doc.tags.forEach((tag) => {
-								// Format supported by nlc train: '[{ text: "my-text", classes:["my-class1", "my-class2",...]}, {}, ...]'
-								var nlcText = tag.label;
-
-								if(nlcText.length > NLC_LIMIT_TEXT_LENGTH) {
-									console.log(`${TAG}: WARNING - image tag too long to use with NLC.  Cloudant doc id: ${doc.id}`);
-									return;
-								}
-
-								var nlcClass = '/' + url_segments.slice(-2).join('/'); // take last 2 segments for BluePic generated URL.
-								var trainingStatement = {
-									text: nlcText,
-									classes: [nlcClass]
-								};
-
-								console.log(`${TAG}: training statement - ${JSON.stringify(trainingStatement)}`);
-								trainingData.push(trainingStatement);
+								addTrainingData(doc.id, trainingData, url_segments, tag.label);
 							});
 						}
 					});
@@ -265,7 +314,7 @@ function main(params) {
 						return;
 					}
 					else if(trainingData.length > NLC_LIMIT_MAX_RECORDS) {
-						console.log(`${TAG}: WARNING - ${trainingData.length} is too many records for NLC.  Limiting to ${NLC_LIMIT_MAX_RECORDS} training records.`);
+						logger.warn(`${TAG}: WARNING - ${trainingData.length} is too many records for NLC.  Limiting to ${NLC_LIMIT_MAX_RECORDS} training records.`);
 						trainingData = trainingData.slice(0, NLC_LIMIT_MAX_RECORDS);
 					}
 
@@ -279,20 +328,20 @@ function main(params) {
 	function trainNewClassifier() {
 		return new Promise((resolve, reject) => {
 			getTrainingData().then((trainingData) => {
-				console.log(`${TAG}: training new classifier - ${classifierName} with ${trainingData.length} training records...`);
+				logger.info(`${TAG}: training new classifier - ${classifierName} with ${trainingData.length} training records...`);
 
-				var params = {
+				var options = {
 					language: 'en',
 					name: classifierName,
 					training_data: trainingData
 				};
 
-				nlc.create(params, (err, response) => {
+				nlc.create(options, (err, response) => {
 					if (err) {
 						reject(err);
 					}
 					else {
-						console.log(`${TAG}: training started for classifier: ${JSON.stringify(response)}`);
+						logger.info(`${TAG}: training started for classifier: ${JSON.stringify(response)}`);
 						resultSummary['training'] = true;
 						resolve();
 					}
@@ -311,7 +360,7 @@ function main(params) {
 					reject(err);
 				}
 				else {
-					console.log(`${TAG}: successfully deleted old classifier: ${classifier.name}`);
+					logger.info(`${TAG}: successfully deleted old classifier: ${classifier.name}`);
 					resolve();
 				}
 			});
@@ -341,10 +390,10 @@ function main(params) {
 
 			resultSummary['cleanup'] = oldClassifiers.length;
 			if (!oldClassifiers.length) {
-				console.log(`${TAG}: no classifiers to cleanup.`);
+				logger.info(`${TAG}: no classifiers to cleanup.`);
 				resolve();
 			} else {
-				console.log(`${TAG}: found ${oldClassifiers.length} to cleanup.`);
+				logger.info(`${TAG}: found ${oldClassifiers.length} to cleanup.`);
 
 				var promises = [];
 
@@ -362,8 +411,12 @@ function main(params) {
 	}
 }
 
+function isLocalRun(params) {
+	return "true" === params.localRun;
+}
+
 // Allows us to run this code locally (outside OpenWhisk) via setting localRun env var.
-if ("true" === process.env.localRun) {
+if (isLocalRun(process.env)) {
 	main(process.env).then((result) => {
 		console.log(JSON.stringify(result, null, 2));
 	}).catch((error) => {

@@ -36,6 +36,7 @@ function install() {
   
   echo "Create action with configuration parameters..."
   wsk action create -t 300000\
+    -p logLevel INFO\
     -p cloudantUsername $cloudantUsername\
     -p cloudantPassword $cloudantPassword\
     -p cloudantDbName $cloudantDbName\
@@ -46,6 +47,7 @@ function install() {
 
   echo "Create cloudant feed trigger..."
   wsk trigger create --feed /whisk.system/cloudant/changes\
+    -p includeDoc true\
     -p host $cloudantHost\
     -p dbname $cloudantDbName\
     -p username $cloudantUsername\
