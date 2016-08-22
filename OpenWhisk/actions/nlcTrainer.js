@@ -4,7 +4,9 @@
  * US Government Users Restricted Rights - Use, duplication or
  * disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
  */
+/*eslint strict: ["off", "global"]*/
 function main(params) {
+	'use strict';  // OpenWhisk can't resolve main function if strict mode is enabled at global scope.
 	/**
 	 *  Action to train NLC instance using image metadata that BluePics stores in cloudant.
 	 *
@@ -22,14 +24,13 @@ function main(params) {
 	 *  @param {string} NLC_LIMIT_MAX_RECORDS (optional) - Max # of records that can be used to train NLC.
 	 *
 	 */
-	const path = require('path');
 	const watson = require('watson-developer-cloud');
 	const Cloudant = require('cloudant');
 
 	var log4js = require('log4js');
 	log4js.configure({
 		appenders: [
-			{ type: "console" }
+			{ type: 'console' }
 		],
 		replaceConsole: true
 	});
@@ -58,7 +59,7 @@ function main(params) {
 				version: 'v1'
 			});
 
-			cloudantDb = Cloudant({account:params.cloudantUsername, password:params.cloudantPassword}).db.use(params.cloudantDbName);
+			cloudantDb = Cloudant({ account: params.cloudantUsername, password: params.cloudantPassword}).db.use(params.cloudantDbName);
 
 			var existingClassifiers = [];
 
@@ -67,7 +68,8 @@ function main(params) {
 
 				if (shouldTrain(existingClassifiers)) {
 					return trainNewClassifier();
-				} else {
+				}
+				else {
 					return Promise.resolve();
 				}
 			}).then(() => {
@@ -77,7 +79,8 @@ function main(params) {
 			}).catch((error) => {
 				reject(error);
 			});
-		} else {
+		}
+		else {
 			reject(`${TAG} Missing required params.`);
 		}
 	});
@@ -92,7 +95,7 @@ function main(params) {
 		var allValid = true;
 
 		// Print params for debugging
-		for(var element in params) {
+		for (var element in params) {
 			logger.debug(`${TAG}: param key: ${element} value: ${JSON.stringify(params[element])}`);
 		}
 
@@ -140,7 +143,8 @@ function main(params) {
 
 					if (!classifiers.length) {
 						resolve(classifiers);
-					} else {
+					}
+					else {
 						var promises = [];
 
 						classifiers.forEach((classifier) => {
@@ -169,7 +173,7 @@ function main(params) {
 	// without tags then modifies the doc with the tags.  Without this check we would train NLC before the tags are available
 	// and the image that triggered training would not be added to the NLC training data.
 	function tagsInCloudant() {
-		return params['_id'] && params['_rev'] && params['type'] === 'image' && params['tags'];
+		return params._id && params._rev && params.type === 'image' && params.tags;
 	}
 
 	// Decides if we should train.  Decision is based on the fact that we haven't created a new classifier in a while
@@ -177,23 +181,26 @@ function main(params) {
 	function shouldTrain(existingClassifiers) {
 		var shouldTrain = false;
 
-		if("true" === params.nlcForceTraining) {
+		if (params.nlcForceTraining === 'true') {
 			logger.info(`${TAG}: should train, because force training flag is set.`);
 			shouldTrain = true;
-		} else {
-			if(!isLocalRun(params) && !tagsInCloudant()) {
+		}
+		else {
+			if (!isLocalRun(params) && !tagsInCloudant()) {
 				logger.info(`${TAG}: should not train, because changed cloudant doc does not include tags.`);
 			}
 			else if (!existingClassifiers.length) {
 				logger.info(`${TAG}: should train, because there are no preexisting classifiers.`);
 				shouldTrain = true;
-			} else {
+			}
+			else {
 				var mostRecent = existingClassifiers[0];
 				var timeDiff = new Date() - new Date(mostRecent.created);
 
 				if (timeDiff < trainingFrequency) {
 					logger.info(`${TAG}: should not train, because training frequency was not exceeded.  Last trained: ${mostRecent.created}`);
-				} else {
+				}
+				else {
 					var alreadyTraining = false;
 					existingClassifiers.forEach((classifier) => {
 						if (classifier.status === 'Training') {
@@ -203,7 +210,8 @@ function main(params) {
 
 					if (alreadyTraining) {
 						logger.info(`${TAG}: should not train, because classifier is already training.`);
-					} else {
+					}
+					else {
 						logger.info(`${TAG}: should train, because all conditions are met.`);
 						shouldTrain = true;
 					}
@@ -211,7 +219,7 @@ function main(params) {
 			}
 		}
 
-		resultSummary['shouldTrain'] = shouldTrain;
+		resultSummary.shouldTrain = shouldTrain;
 		return shouldTrain;
 	}
 
@@ -220,11 +228,11 @@ function main(params) {
 	function addTrainingData(docId, array, url_segments, training_text) {
 		var NLC_LIMIT_TEXT_LENGTH = params.NLC_LIMIT_TEXT_LENGTH || 1024;
 
-		if(!training_text || !training_text.length) {
+		if (!training_text || !training_text.length) {
 			logger.warn(`${TAG}: WARNING - omitting empty training text.  Cloudant doc id: ${docId}`);
 			return;
 		}
-		else if(training_text.length > NLC_LIMIT_TEXT_LENGTH) {
+		else if (training_text.length > NLC_LIMIT_TEXT_LENGTH) {
 			logger.warn(`${TAG}: WARNING - image tag too long to use with NLC.  Cloudant doc id: ${docId}`);
 			return;
 		}
@@ -263,7 +271,7 @@ function main(params) {
 					reject(err);
 				}
 				else {
-					if(body.total_rows > options.limit) {
+					if (body.total_rows > options.limit) {
 						logger.warn(`${TAG}: WARNING - cloudant contains more image than supported for NLC training.  NLC will not be trained for all images.`);
 					}
 
@@ -271,15 +279,15 @@ function main(params) {
 						return element.doc && element.doc.type === 'image' && element.doc.tags && element.doc.tags.length;
 					});
 
-					var imageDocs = imageDocs.map((element) => {
+					imageDocs = imageDocs.map((element) => {
 						return element.doc;
 					});
 
-					if(!imageDocs.length) {
+					if (!imageDocs.length) {
 						reject('no image metadata to use for NLC training');
 						return;
 					}
-					else if(imageDocs.length > NLC_LIMIT_NUM_CLASSES) {
+					else if (imageDocs.length > NLC_LIMIT_NUM_CLASSES) {
 						logger.warn(`${TAG}: WARNING - cloudant returned more image than supported for NLC training.  NLC will not be trained for all images.`);
 						imageDocs = imageDocs.slice(0, NLC_LIMIT_NUM_CLASSES);
 					}
@@ -287,19 +295,20 @@ function main(params) {
 					imageDocs.forEach(function(doc) {
 						var url_segments;
 
-						if(doc.url) {
+						if (doc.url) {
 							url_segments = doc.url.split('/');
 						}
 
-						if(!url_segments || url_segments.length < 2) {
+						if (!url_segments || url_segments.length < 2) {
 							logger.warn(`${TAG}: WARNING - image metadata in cloudant does not have valid url.  Cloudant doc id: ${doc.id}`);
-						} else {
+						}
+						else {
 							// Include training data from different doc fields of interest.
-							if(doc.caption) {
+							if (doc.caption) {
 								addTrainingData(doc.id, trainingData, url_segments, doc.caption);
 							}
 
-							if(doc.location && doc.location.name) {
+							if (doc.location && doc.location.name) {
 								addTrainingData(doc.id, trainingData, url_segments, doc.location.name);
 							}
 
@@ -309,11 +318,11 @@ function main(params) {
 						}
 					});
 
-					if(trainingData.length < NLC_LIMIT_MIN_RECORDS) {
+					if (trainingData.length < NLC_LIMIT_MIN_RECORDS) {
 						reject('not enough training records to use with NLC');
 						return;
 					}
-					else if(trainingData.length > NLC_LIMIT_MAX_RECORDS) {
+					else if (trainingData.length > NLC_LIMIT_MAX_RECORDS) {
 						logger.warn(`${TAG}: WARNING - ${trainingData.length} is too many records for NLC.  Limiting to ${NLC_LIMIT_MAX_RECORDS} training records.`);
 						trainingData = trainingData.slice(0, NLC_LIMIT_MAX_RECORDS);
 					}
@@ -342,7 +351,7 @@ function main(params) {
 					}
 					else {
 						logger.info(`${TAG}: training started for classifier: ${JSON.stringify(response)}`);
-						resultSummary['training'] = true;
+						resultSummary.training = true;
 						resolve();
 					}
 				});
@@ -383,16 +392,18 @@ function main(params) {
 				}
 				else if (!mostRecentAvailable && classifier.status === 'Available') {
 					mostRecentAvailable = classifier;
-				} else {
+				}
+				else {
 					oldClassifiers.push(classifier);
 				}
 			}
 
-			resultSummary['cleanup'] = oldClassifiers.length;
+			resultSummary.cleanup = oldClassifiers.length;
 			if (!oldClassifiers.length) {
 				logger.info(`${TAG}: no classifiers to cleanup.`);
 				resolve();
-			} else {
+			}
+			else {
 				logger.info(`${TAG}: found ${oldClassifiers.length} to cleanup.`);
 
 				var promises = [];
@@ -412,7 +423,7 @@ function main(params) {
 }
 
 function isLocalRun(params) {
-	return "true" === params.localRun;
+	return params.localRun === 'true';
 }
 
 // Allows us to run this code locally (outside OpenWhisk) via setting localRun env var.

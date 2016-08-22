@@ -11,7 +11,7 @@
     "start": "source config/env && hubot -a shell",
     "slack": "source config/env && hubot -a slack",
     "facebook": "source config/env && hubot -a fb",
-    "lint": "eslint src/**/*.js test/*.js index.js",
+    "lint": "eslint src/**/*.js test/*.js index.js OpenWhisk/actions/*.js",
     "postinstall": "initDb src/nlc/NLC.json",
     "test": ". test/.env && mocha test",
     "coverage": ". test/.env && istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage",
