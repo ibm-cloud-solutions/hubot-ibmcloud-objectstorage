@@ -85,7 +85,7 @@ ObjectStore.prototype.checkAuth = function() {
 		return Promise.resolve();
 	}
 	else {
-		return new Promise(function(resolve, reject) {
+		return new Promise((resolve, reject) => {
 			var d = {
 				auth: {
 					identity: {
@@ -112,7 +112,7 @@ ObjectStore.prototype.checkAuth = function() {
 			request.post({
 				url: url,
 				json: d
-			}, function(err, res) {
+			}, (err, res) => {
 				if (err) {
 					os.logger.error(`${TAG}: ` + 'objectstore', 'checkAuth', err);
 					return reject(err);
@@ -279,7 +279,7 @@ ObjectStore.prototype.getObject = function(containerName, objectName) {
 				headers: {
 					'X-AUTH-TOKEN': os.token
 				}
-			}).on('error', function(err) {
+			}).on('error', (err) => {
 				os.logger.error(`${TAG}: Object ${objectName} was not found in container ${containerName}.`, err);
 				reject(new Error(`Object ${objectName} was not found in container ${containerName}.`));
 			}).on('complete', function(res) {
