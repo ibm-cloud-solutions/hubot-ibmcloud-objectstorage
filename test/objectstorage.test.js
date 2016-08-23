@@ -285,6 +285,8 @@ describe('Test test via Slack', function() {
 				'help.objectstorage.container.details') + '\n';
 			help += 'hubot objectstorage retrieve <container> <object> - ' + i18n.__(
 				'help.objectstorage.retrieve.object') + '\n';
+			help += 'hubot objectstorage search <searchPhrase> - ' + i18n.__(
+					'help.objectstorage.search') + '\n';
 			expect(room.messages[1]).to.eql(['hubot', '@mimiron \n' + help]);
 		});
 	});

@@ -42,6 +42,9 @@ export HUBOT_WATSON_NLC_PASSWORD=<NLC_PASSWORD>
 ## Commands
 - `hubot objectstorage help` - Show available commands in the ibmcloud objectstorage category.
 - `hubot objectstorage container list` - Show all Object Storage containers
+- `hubot objectstorage container details <container>` - Lists the objects inside of <container> object storage container.  <container> is optional.  If omitted, you can select a container from a list.
+- `hubot objectstorage retrieve <container> <object>` - Retrieves <object> object found in the container <container>.  Both <container> and <object> are optional.  If omitted, you will be prompted to select them.
+- `hubot objectstorage search <searchPhrase>` - Search Object Storage for <searchPhrase>.  Objects matching the <searchPhrase> will be returned to the adapter.
 
 ## Hubot Adapter Setup
 
