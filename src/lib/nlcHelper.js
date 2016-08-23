@@ -11,22 +11,13 @@ const TAG = path.basename(__filename);
 const watson = require('watson-developer-cloud');
 const _ = require('lodash');
 
-const NLC_URL = process.env.VCAP_SERVICES_NATURAL_LANGUAGE_CLASSIFIER_0_CREDENTIALS_URL || process.env.HUBOT_WATSON_NLC_URL;
-const NLC_USERNAME = process.env.VCAP_SERVICES_NATURAL_LANGUAGE_CLASSIFIER_0_CREDENTIALS_USERNAME || process.env.HUBOT_WATSON_NLC_USERNAME;
-const NLC_PASSWORD = process.env.VCAP_SERVICES_NATURAL_LANGUAGE_CLASSIFIER_0_CREDENTIALS_PASSWORD || process.env.HUBOT_WATSON_NLC_PASSWORD;
-const NLC_CLASSIFIER_NAME = process.env.HUBOT_WATSON_NLC_OJBECTSTORAGE_CLASSIFIER_NAME ||
-	'cloudbot-obj-storage-classifier';
-
 /**
- * @param options Object with the following configuration.
- *        options.url = Watson NLC API URL (OPTIONAL, defaults to https://gateway.watsonplatform.net/natural-language-classifier/api)
- *        options.username = Watson NLC username (REQUIRED)
- *        options.password = Watson NLC password (REQUIRED)
- *        options.version = Watson NLC version (OPTIONAL, defaults to V1)
- *        options.language = Watson NLC language (OPTIONAL, defaults to en)
- *        options.classifierName = Watson NLC classifier name (OPTIONAL, defaults to 'default-classifier')
- *        options.maxClassifiers = Maximum number of classifiers with name 'classifierName', will delete classifiers exceding this num (OPTIONAL, defaults to 3)
- *        options.training_data = ReadStream, typically created from a CSV file.  (OPTIONAL, if omitted training data will come from nlcDb)
+ * @param context Object with the following configuration.
+ *        context.robot.logger = Hubot Logger
+ *        context.settings.nlc_url = Watson NLC API URL (OPTIONAL, defaults to https://gateway.watsonplatform.net/natural-language-classifier/api)
+ *        context.settings.nlc_username = Watson NLC username (REQUIRED)
+ *        context.settings.password = Watson NLC password (REQUIRED)
+ *        context.nlc_version = Watson NLC version (OPTIONAL, defaults to V1)
  * @constructor
  */
 function NLCHelper(context) {
@@ -34,18 +25,19 @@ function NLCHelper(context) {
 
 	this.initSuccess = false;
 
+	// Check for missing environment variables
 	this.missingEnv;
-	if (!NLC_URL || NLC_URL.length === 0) {
-		this.missingEnv = 'NLC_URL';
+	if (!context.settings.nlc_url || context.settings.nlc_url.length === 0) {
+		this.missingEnv = 'HUBOT_WATSON_NLC_URL';
 	}
-	else if (!NLC_USERNAME || NLC_USERNAME.length === 0) {
-		this.missingEnv = 'NLC_USERNAME';
+	else if (!context.settings.nlc_username || context.settings.nlc_username.length === 0) {
+		this.missingEnv = 'HUBOT_WATSON_NLC_USERNAME';
 	}
-	else if (!NLC_PASSWORD || NLC_PASSWORD.length === 0) {
-		this.missingEnv = 'NLC_PASSWORD';
+	else if (!context.settings.nlc_password || context.settings.nlc_password.length === 0) {
+		this.missingEnv = 'HUBOT_WATSON_NLC_PASSWORD';
 	}
-	else if (!NLC_CLASSIFIER_NAME || NLC_CLASSIFIER_NAME.length === 0) {
-		this.missingEnv = 'NLC_CLASSIFIER_NAME';
+	else if (!context.settings.nlc_objectstorage_classifier || context.settings.nlc_objectstorage_classifier.length === 0) {
+		this.missingEnv = 'HUBOT_WATSON_NLC_OJBECTSTORAGE_CLASSIFIER_NAME';
 	}
 
 	if (!this.missingEnv) {
@@ -58,11 +50,11 @@ function NLCHelper(context) {
 	}
 
 	this.opts = {
-		url: NLC_URL,
-		username: NLC_USERNAME,
-		password: NLC_PASSWORD,
-		version: 'v1',
-		classifierName: NLC_CLASSIFIER_NAME,
+		url: context.settings.nlc_url,
+		username: context.settings.nlc_username,
+		password: context.settings.nlc_password,
+		version: context.settings.nlc_version,
+		classifierName: context.settings.nlc_objectstorage_classifier,
 		maxClassifiers: 1,
 		classifierLanguage: 'en'
 	};
@@ -71,10 +63,20 @@ function NLCHelper(context) {
 		this.nlc = watson.natural_language_classifier(this.opts);
 }
 
+/**
+ * Returns whether the NLCHelper initialized properly.
+ *
+ * @return Boolean true if the NLCHelper is ready to use
+ */
 NLCHelper.prototype.initializedSuccessfully = function() {
 	return this.initSuccess;
 };
 
+/**
+ * Returns the missing environment variable that caused the NLCHelper not to initialize properly
+ *
+ * @return String the missing environment variable that caused the NLCHelper not to initialize properly
+ */
 NLCHelper.prototype.getMissingEnv = function() {
 	return this.missingEnv;
 };
@@ -90,7 +92,7 @@ NLCHelper.prototype.classify = function(text) {
 	this._getClassifier().then((classifier) => {
 		this.logger.info('Using classifier %s', JSON.stringify(classifier));
 		if (classifier.status === 'Training') {
-			dfd.resolve(classifier);
+			dfd.reject(new Error('There is not an available classifer at this time.'));
 		}
 		else {
 			this.nlc.classify(
@@ -131,12 +133,14 @@ NLCHelper.prototype._getClassifier = function() {
 		dfd.resolve(this.classifier_cache);
 	}
 	else {
+		// List all the classifiers
 		this.nlc.list({}, (err, response) => {
 			if (err) {
 				this.logger.error('Error getting available classifiers.', err);
 				dfd.reject('Error getting available classifiers.' + JSON.stringify(err, null, 2));
 			}
 			else {
+				// filter out classifiers that have a different name
 				let filteredClassifiers = response.classifiers.filter((classifier) => {
 					return classifier.name === this.opts.classifierName;
 				});
@@ -145,28 +149,28 @@ NLCHelper.prototype._getClassifier = function() {
 					dfd.reject(`No classifiers found under [${this.opts.classifierName}]`);
 				}
 				else {
-					// try to find the most recent available.  or most recent that started training.
-					let sortedClassifiers = filteredClassifiers.sort((a, b) => {
-						return new Date(b.created) - new Date(a.created);
-					});
-
 					let checkStatus = [];
-					sortedClassifiers.map((classifier) => {
+					filteredClassifiers.map((classifier) => {
 						checkStatus.push(this.classifierStatus(classifier.classifier_id));
 					});
 
+					// Get the status of all classifiers
 					Promise.all(checkStatus).then((classifierStatus) => {
+						// try to find the most recent available.  or most recent that started training.
+						let sortedClassifiers = classifierStatus.sort((a, b) => {
+							return new Date(b.created) - new Date(a.created);
+						});
 
 						this.classifierTraining = undefined;
 						for (let i = 0; i < sortedClassifiers.length; i++) {
 							if (sortedClassifiers[i].name === this.opts.classifierName) {
-								if (classifierStatus[i].status === 'Available') {
-									this.classifier_cache = classifierStatus[i];
-									dfd.resolve(classifierStatus[i]);
+								if (sortedClassifiers[i].status === 'Available') {
+									this.classifier_cache = sortedClassifiers[i];
+									dfd.resolve(sortedClassifiers[i]);
 									return;
 								}
-								else if (classifierStatus[i].status === 'Training' && !this.classifierTraining) {
-									this.classifierTraining = classifierStatus[i];
+								else if (sortedClassifiers[i].status === 'Training' && !this.classifierTraining) {
+									this.classifierTraining = sortedClassifiers[i];
 								}
 							}
 						}
@@ -224,9 +228,9 @@ NLCHelper.prototype.classifierStatus = function(classifier_id) {
 };
 
 /**
- *  Method to help with the clanup of old classifiers.
+ *  Method to delete a classifier by id
  *
- * @return Promise Resolves when classifiers have been deleted.
+ * @return Promise Resolves when classifier has been deleted.
  */
 NLCHelper.prototype.deleteClassifier = function(classifierIdToDelete) {
 	let dfd = Promise.defer();
@@ -245,22 +249,26 @@ NLCHelper.prototype.deleteClassifier = function(classifierIdToDelete) {
 };
 
 /**
- *  Method to help with the clanup of old classifiers.
+ *  Method to help with the cleanup of old classifiers.  Will leave a least one classifier in
+ * the 'Available' status and one in the 'Training' status.  The newest classifier in each category will remain.
  *
  * @return Promise Resolves when classifiers have been deleted.
  */
 NLCHelper.prototype.deleteOldClassifiers = function() {
 	let dfd = Promise.defer();
+	// List all classifiers
 	this.nlc.list({}, (err, response) => {
 		if (err) {
 			this.logger.error('Error getting available classifiers.', err);
 			dfd.reject('Error getting available classifiers. ' + JSON.stringify(err, null, 2));
 		}
 		else {
+			// Filter those that have different names
 			let filteredClassifiers = response.classifiers.filter((classifier) => {
 				return classifier.name === this.opts.classifierName;
 			});
 
+			// Get the status of each classifier
 			let statusPromises = [];
 			_.forEach(filteredClassifiers, (classifier) => {
 				statusPromises.push(this.classifierStatus(classifier.classifier_id));
@@ -268,6 +276,7 @@ NLCHelper.prototype.deleteOldClassifiers = function() {
 
 			Promise.all(statusPromises)
 				.then((statusResults) => {
+					// Bucket classifiers into the Available and Other bucket
 					let activeClassifiers = [];
 					let otherClassifiers = [];
 					_.forEach(statusResults, (classifierInfo) => {
@@ -279,6 +288,7 @@ NLCHelper.prototype.deleteOldClassifiers = function() {
 						}
 					});
 
+					// Sort each bucket by date created
 					let sortedAvailableClassifiers = activeClassifiers.sort((a, b) => {
 						return new Date(b.created) - new Date(a.created);
 					});
@@ -287,11 +297,14 @@ NLCHelper.prototype.deleteOldClassifiers = function() {
 						return new Date(b.created) - new Date(a.created);
 					});
 
-					this.logger.debug(`${TAG}: All available classifiers (sorted by date): ` + JSON.stringify(sortedAvailableClassifiers,
+					this.logger.debug(`${TAG}: All available classifiers (sorted by date): ` + JSON.stringify(
+						sortedAvailableClassifiers,
 						null, 2));
-					this.logger.debug(`${TAG}: All unavailable classifiers (sorted by date): ` + JSON.stringify(sortedOtherClassifiers,
+					this.logger.debug(`${TAG}: All unavailable classifiers (sorted by date): ` + JSON.stringify(
+						sortedOtherClassifiers,
 						null, 2));
 
+					// Remove the latest classifer from each bucket (don't want to delete the latest)
 					if (sortedAvailableClassifiers.length > 0) {
 						sortedAvailableClassifiers.shift();
 					}
@@ -300,11 +313,13 @@ NLCHelper.prototype.deleteOldClassifiers = function() {
 						sortedOtherClassifiers.shift();
 					}
 
+					// Merge remaining items from both buckets into a single bucket.  All these can be deleted.
 					let classifiersToDelete = _.concat(sortedAvailableClassifiers, sortedOtherClassifiers);
 
 					this.logger.debug(`${TAG}: All old classifiers (to be deleted): ` + JSON.stringify(classifiersToDelete, null,
 						2));
 
+					// Delete old classifiers
 					let deletePromises = [];
 					_.forEach(classifiersToDelete, (classifier) => {
 						deletePromises.push(this.deleteClassifier(classifier.classifier_id));

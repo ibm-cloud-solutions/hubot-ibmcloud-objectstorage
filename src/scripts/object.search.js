@@ -20,6 +20,7 @@
  */
 'use strict';
 
+const env = require('../lib/env');
 const Helper = require('../lib/paramHelper');
 const path = require('path');
 const TAG = path.basename(__filename);
@@ -27,11 +28,6 @@ const Conversation = require('hubot-conversation');
 const _ = require('lodash');
 const activity = require('hubot-ibmcloud-activity-emitter');
 const NLCHelper = require('../lib/nlcHelper');
-
-const NLC_SEARCH_CONFIDENCE_MIN = parseFloat(process.env.NLC_SEARCH_CONFIDENCE_MIN) || 0.25;
-const NLC_SEARCH_RESULT_LIMIT = parseInt(process.env.NLC_SEARCH_RESULT_LIMIT, 10) || 3;
-const NLC_SEARCH_CLASSIFIER_CLEANUP_INTERVAL = parseInt(process.env.NLC_SEARCH_CLASSIFIER_CLEANUP_INTERVAL, 10) || 1000 *
-	60 * 60; // Default to every hour
 
 const i18n = new (require('i18n-2'))({
 	locales: ['en'],
@@ -51,7 +47,8 @@ module.exports = (robot, res) => {
 	if (!helper) {
 		helper = new Helper({
 			robot: robot,
-			res: res
+			res: res,
+			settings: env
 		});
 		if (helper.initializedSuccessfully()) {
 			storage = helper.getObjectStorage();
@@ -65,7 +62,8 @@ module.exports = (robot, res) => {
 	let context = {
 		res: res,
 		robot: robot,
-		switchBoard: switchBoard
+		switchBoard: switchBoard,
+		settings: env
 	};
 
 	let nlcHelper = new NLCHelper(context);
@@ -109,7 +107,7 @@ module.exports = (robot, res) => {
 					.catch((err) => {
 						robot.logger.error('Problem deleting old classifiers.', err);
 					});
-			}, NLC_SEARCH_CLASSIFIER_CLEANUP_INTERVAL);
+			}, env.nlc_classifier_cleanup_interval);
 		}
 		else {
 			context.robot.logger.debug('NLC not enabled so classifier cannot take place');
@@ -124,13 +122,13 @@ module.exports = (robot, res) => {
 					let count = 0;
 					_.forEach(classifierResult.classes, (classifier) => {
 						let path = classifier.class_name.split('/');
-						if (classifier.confidence >= NLC_SEARCH_CONFIDENCE_MIN) {
+						if (classifier.confidence >= env.nlc_search_confidence_min) {
 							matches.push({
 								containerName: path[1],
 								objectName: path[2]
 							});
 							count++;
-							if (count >= NLC_SEARCH_RESULT_LIMIT)
+							if (count >= env.nlc_search_result_limit)
 								return false;
 						}
 					});

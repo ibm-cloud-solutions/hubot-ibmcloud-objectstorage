@@ -20,6 +20,8 @@
 const path = require('path');
 const TAG = path.basename(__filename);
 const Helper = require('../lib/paramHelper');
+const env = require('../lib/env');
+
 
 const i18n = new (require('i18n-2'))({
 	locales: ['en'],
@@ -42,7 +44,8 @@ module.exports = (robot, res) => {
 	if (!helper) {
 		helper = new Helper({
 			robot: robot,
-			res: res
+			res: res,
+			settings: env
 		});
 		if (helper.initializedSuccessfully()) {
 			storage = helper.getObjectStorage();

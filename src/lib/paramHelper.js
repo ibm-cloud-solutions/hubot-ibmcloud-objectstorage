@@ -28,14 +28,15 @@ const i18n = new (require('i18n-2'))({
 // At some point we need to toggle this setting based on some user input.
 i18n.setLocale('en');
 
-function ObjectStoreHelper(options) {
+function ParamHelper(options) {
 	this.robot = options.robot;
 	this.res = options.res;
 	this.logger = this.robot.logger;
 	this.initSuccess = false;
 	this.storage = new ObjectStorage({
 		robot: this.robot,
-		res: this.res
+		res: this.res,
+		settings: options.settings
 	});
 	if (!this.storage.initializedSuccessfully()) {
 		this.missingEnv = this.storage.missingEnv;
@@ -47,19 +48,19 @@ function ObjectStoreHelper(options) {
 	return this;
 }
 
-ObjectStoreHelper.prototype.initializedSuccessfully = function() {
+ParamHelper.prototype.initializedSuccessfully = function() {
 	return this.initSuccess;
 };
 
-ObjectStoreHelper.prototype.getMissingEnv = function() {
+ParamHelper.prototype.getMissingEnv = function() {
 	return this.missingEnv;
 };
 
-ObjectStoreHelper.prototype.isAdapterSupported = function(adapterName) {
+ParamHelper.prototype.isAdapterSupported = function(adapterName) {
 	return _.indexOf(SUPPORTED_ADAPTERS, adapterName) !== -1;
 };
 
-ObjectStoreHelper.prototype.getObjectStorage = function() {
+ParamHelper.prototype.getObjectStorage = function() {
 	if (!this.initializedSuccessfully()) {
 		return Promise.reject(i18n.__('objectstorage.missing.envs', this.missingEnv));
 	}
@@ -67,7 +68,7 @@ ObjectStoreHelper.prototype.getObjectStorage = function() {
 	return this.storage;
 };
 
-ObjectStoreHelper.prototype.createRangeRegEx = function(start, end) {
+ParamHelper.prototype.createRangeRegEx = function(start, end) {
 	let pattern = '\\b(';
 	let i;
 	for (i = start; i < end; i++) {
@@ -77,7 +78,7 @@ ObjectStoreHelper.prototype.createRangeRegEx = function(start, end) {
 	return new RegExp(pattern);
 };
 
-ObjectStoreHelper.prototype.createPromptForSelection = function(context, choices, promptDescription) {
+ParamHelper.prototype.createPromptForSelection = function(context, choices, promptDescription) {
 	if (!this.initializedSuccessfully()) {
 		return Promise.reject(i18n.__('objectstorage.missing.envs', this.missingEnv));
 	}
@@ -108,7 +109,7 @@ ObjectStoreHelper.prototype.createPromptForSelection = function(context, choices
 		});
 };
 
-ObjectStoreHelper.prototype.obtainContainerName = function(context, inputName) {
+ParamHelper.prototype.obtainContainerName = function(context, inputName) {
 	if (!this.initializedSuccessfully()) {
 		return Promise.reject(i18n.__('objectstorage.missing.envs', this.missingEnv));
 	}
@@ -138,7 +139,7 @@ ObjectStoreHelper.prototype.obtainContainerName = function(context, inputName) {
 		});
 };
 
-ObjectStoreHelper.prototype.obtainObjectName = function(context, containerName, originalInputName) {
+ParamHelper.prototype.obtainObjectName = function(context, containerName, originalInputName) {
 	if (!this.initializedSuccessfully()) {
 		return Promise.reject(i18n.__('objectstorage.missing.envs', this.missingEnv));
 	}
@@ -182,4 +183,4 @@ ObjectStoreHelper.prototype.obtainObjectName = function(context, containerName, 
 		});
 };
 
-exports = module.exports = ObjectStoreHelper;
+exports = module.exports = ParamHelper;
