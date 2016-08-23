@@ -30,6 +30,8 @@ const NLCHelper = require('../lib/nlcHelper');
 
 const NLC_SEARCH_CONFIDENCE_MIN = parseFloat(process.env.NLC_SEARCH_CONFIDENCE_MIN) || 0.25;
 const NLC_SEARCH_RESULT_LIMIT = parseInt(process.env.NLC_SEARCH_RESULT_LIMIT, 10) || 3;
+const NLC_SEARCH_CLASSIFIER_CLEANUP_INTERVAL = parseInt(process.env.NLC_SEARCH_CLASSIFIER_CLEANUP_INTERVAL, 10) || 1000 *
+	60 * 60; // Default to every hour
 
 const i18n = new (require('i18n-2'))({
 	locales: ['en'],
@@ -68,6 +70,8 @@ module.exports = (robot, res) => {
 
 	let nlcHelper = new NLCHelper(context);
 
+	enableClassifierCleanupInterval();
+
 	// Natural Language match
 	robot.on('objectstorage.search.object', (res, parameters) => {
 		robot.logger.debug(`${TAG}: Natural Language match.`);
@@ -93,6 +97,24 @@ module.exports = (robot, res) => {
 		robot.logger.debug(`${TAG}: res.message.text=${res.message.text}.`);
 		processObjectSearch(robot, res, res.match[1]);
 	});
+
+	function enableClassifierCleanupInterval() {
+		if (nlcHelper.initializedSuccessfully()) {
+			context.robot.logger.debug('NLC enabled so classifier will take place');
+			setInterval(() => {
+				nlcHelper.deleteOldClassifiers()
+					.then((result) => {
+						robot.logger.debug('Successfully deleted old classifiers.  ' + JSON.stringify(result, null, 2));
+					})
+					.catch((err) => {
+						robot.logger.error('Problem deleting old classifiers.', err);
+					});
+			}, NLC_SEARCH_CLASSIFIER_CLEANUP_INTERVAL);
+		}
+		else {
+			context.robot.logger.debug('NLC not enabled so classifier cannot take place');
+		}
+	}
 
 	function searchForObject(context, nlcHelper, searchPhrase) {
 		return nlcHelper.classify(searchPhrase)

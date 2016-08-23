@@ -6,12 +6,16 @@
  */
 'use strict';
 
+const path = require('path');
+const TAG = path.basename(__filename);
 const watson = require('watson-developer-cloud');
+const _ = require('lodash');
 
 const NLC_URL = process.env.VCAP_SERVICES_NATURAL_LANGUAGE_CLASSIFIER_0_CREDENTIALS_URL || process.env.HUBOT_WATSON_NLC_URL;
 const NLC_USERNAME = process.env.VCAP_SERVICES_NATURAL_LANGUAGE_CLASSIFIER_0_CREDENTIALS_USERNAME || process.env.HUBOT_WATSON_NLC_USERNAME;
 const NLC_PASSWORD = process.env.VCAP_SERVICES_NATURAL_LANGUAGE_CLASSIFIER_0_CREDENTIALS_PASSWORD || process.env.HUBOT_WATSON_NLC_PASSWORD;
-const NLC_CLASSIFIER = process.env.HUBOT_WATSON_NLC_OJBECTSTORAGE_CLASSIFIER || 'cloudbot-obj-storage-classifier';
+const NLC_CLASSIFIER_NAME = process.env.HUBOT_WATSON_NLC_OJBECTSTORAGE_CLASSIFIER_NAME ||
+	'cloudbot-obj-storage-classifier';
 
 /**
  * @param options Object with the following configuration.
@@ -40,8 +44,8 @@ function NLCHelper(context) {
 	else if (!NLC_PASSWORD || NLC_PASSWORD.length === 0) {
 		this.missingEnv = 'NLC_PASSWORD';
 	}
-	else if (!NLC_CLASSIFIER || NLC_CLASSIFIER.length === 0) {
-		this.missingEnv = 'NLC_CLASSIFIER';
+	else if (!NLC_CLASSIFIER_NAME || NLC_CLASSIFIER_NAME.length === 0) {
+		this.missingEnv = 'NLC_CLASSIFIER_NAME';
 	}
 
 	if (!this.missingEnv) {
@@ -58,8 +62,8 @@ function NLCHelper(context) {
 		username: NLC_USERNAME,
 		password: NLC_PASSWORD,
 		version: 'v1',
-		classifierName: NLC_CLASSIFIER,
-		maxClassifiers: 3,
+		classifierName: NLC_CLASSIFIER_NAME,
+		maxClassifiers: 1,
 		classifierLanguage: 'en'
 	};
 
@@ -82,7 +86,7 @@ NLCHelper.prototype.getMissingEnv = function() {
  * @return JSON      		Classification data from Watson Natural Language Classifier.
  */
 NLCHelper.prototype.classify = function(text) {
-	var dfd = Promise.defer();
+	let dfd = Promise.defer();
 	this._getClassifier().then((classifier) => {
 		this.logger.info('Using classifier %s', JSON.stringify(classifier));
 		if (classifier.status === 'Training') {
@@ -120,10 +124,10 @@ NLCHelper.prototype.classify = function(text) {
  * @return Promise When resolved it returns a JSON object with the classifier information.
  */
 NLCHelper.prototype._getClassifier = function() {
-	var dfd = Promise.defer();
+	let dfd = Promise.defer();
 
 	if (this.classifier_cache) {
-		this.logger.debug(`Using cached NLC classifier ${this.classifier_cache.classifier_id}`);
+		this.logger.debug(`${TAG}: Using cached NLC classifier ${this.classifier_cache.classifier_id}`);
 		dfd.resolve(this.classifier_cache);
 	}
 	else {
@@ -133,7 +137,7 @@ NLCHelper.prototype._getClassifier = function() {
 				dfd.reject('Error getting available classifiers.' + JSON.stringify(err, null, 2));
 			}
 			else {
-				var filteredClassifiers = response.classifiers.filter((classifier) => {
+				let filteredClassifiers = response.classifiers.filter((classifier) => {
 					return classifier.name === this.opts.classifierName;
 				});
 
@@ -142,11 +146,11 @@ NLCHelper.prototype._getClassifier = function() {
 				}
 				else {
 					// try to find the most recent available.  or most recent that started training.
-					var sortedClassifiers = filteredClassifiers.sort((a, b) => {
+					let sortedClassifiers = filteredClassifiers.sort((a, b) => {
 						return new Date(b.created) - new Date(a.created);
 					});
 
-					var checkStatus = [];
+					let checkStatus = [];
 					sortedClassifiers.map((classifier) => {
 						checkStatus.push(this.classifierStatus(classifier.classifier_id));
 					});
@@ -154,7 +158,7 @@ NLCHelper.prototype._getClassifier = function() {
 					Promise.all(checkStatus).then((classifierStatus) => {
 
 						this.classifierTraining = undefined;
-						for (var i = 0; i < sortedClassifiers.length; i++) {
+						for (let i = 0; i < sortedClassifiers.length; i++) {
 							if (sortedClassifiers[i].name === this.opts.classifierName) {
 								if (classifierStatus[i].status === 'Available') {
 									this.classifier_cache = classifierStatus[i];
@@ -192,7 +196,7 @@ NLCHelper.prototype._getClassifier = function() {
  * @return Promise       			When resolved returns the classifier data.
  */
 NLCHelper.prototype.classifierStatus = function(classifier_id) {
-	var dfd = Promise.defer();
+	let dfd = Promise.defer();
 	if (classifier_id) {
 		this.nlc.status({
 			classifier_id: classifier_id
@@ -204,10 +208,10 @@ NLCHelper.prototype.classifierStatus = function(classifier_id) {
 			else {
 				// If classifier is Training, record it's training duration
 				if (status.status === 'Training') {
-					var duration = Math.floor((Date.now() - new Date(status.created)) / 60000);
+					let duration = Math.floor((Date.now() - new Date(status.created)) / 60000);
 					status.duration = duration > 0 ? duration : 0;
 				}
-				this.logger.debug(`Classifier ${classifier_id} status: ${status}`);
+				this.logger.debug(`${TAG}: Classifier ${classifier_id} status: ` + JSON.stringify(status, null, 2));
 				dfd.resolve(status);
 			}
 		});
@@ -216,6 +220,111 @@ NLCHelper.prototype.classifierStatus = function(classifier_id) {
 		this.logger.error('classifier_id is a required parameter');
 		dfd.reject(new Error('classifier_id is a required parameter'));
 	}
+	return dfd.promise;
+};
+
+/**
+ *  Method to help with the clanup of old classifiers.
+ *
+ * @return Promise Resolves when classifiers have been deleted.
+ */
+NLCHelper.prototype.deleteClassifier = function(classifierIdToDelete) {
+	let dfd = Promise.defer();
+	this.nlc.remove({
+		classifier_id: classifierIdToDelete
+	}, (err, result) => {
+		if (err) {
+			dfd.reject('Error deleting classifier: ' + JSON.stringify(err, null, 2));
+		}
+		else {
+			this.logger.info(`${TAG}: Deleted classifier ${classifierIdToDelete}`);
+			dfd.resolve(result);
+		}
+	});
+	return dfd.promise;
+};
+
+/**
+ *  Method to help with the clanup of old classifiers.
+ *
+ * @return Promise Resolves when classifiers have been deleted.
+ */
+NLCHelper.prototype.deleteOldClassifiers = function() {
+	let dfd = Promise.defer();
+	this.nlc.list({}, (err, response) => {
+		if (err) {
+			this.logger.error('Error getting available classifiers.', err);
+			dfd.reject('Error getting available classifiers. ' + JSON.stringify(err, null, 2));
+		}
+		else {
+			let filteredClassifiers = response.classifiers.filter((classifier) => {
+				return classifier.name === this.opts.classifierName;
+			});
+
+			let statusPromises = [];
+			_.forEach(filteredClassifiers, (classifier) => {
+				statusPromises.push(this.classifierStatus(classifier.classifier_id));
+			});
+
+			Promise.all(statusPromises)
+				.then((statusResults) => {
+					let activeClassifiers = [];
+					let otherClassifiers = [];
+					_.forEach(statusResults, (classifierInfo) => {
+						if (classifierInfo.status === 'Available') {
+							activeClassifiers.push(classifierInfo);
+						}
+						else {
+							otherClassifiers.push(classifierInfo);
+						}
+					});
+
+					let sortedAvailableClassifiers = activeClassifiers.sort((a, b) => {
+						return new Date(b.created) - new Date(a.created);
+					});
+
+					let sortedOtherClassifiers = otherClassifiers.sort((a, b) => {
+						return new Date(b.created) - new Date(a.created);
+					});
+
+					this.logger.debug(`${TAG}: All available classifiers (sorted by date): ` + JSON.stringify(sortedAvailableClassifiers,
+						null, 2));
+					this.logger.debug(`${TAG}: All unavailable classifiers (sorted by date): ` + JSON.stringify(sortedOtherClassifiers,
+						null, 2));
+
+					if (sortedAvailableClassifiers.length > 0) {
+						sortedAvailableClassifiers.shift();
+					}
+
+					if (sortedOtherClassifiers.length > 0) {
+						sortedOtherClassifiers.shift();
+					}
+
+					let classifiersToDelete = _.concat(sortedAvailableClassifiers, sortedOtherClassifiers);
+
+					this.logger.debug(`${TAG}: All old classifiers (to be deleted): ` + JSON.stringify(classifiersToDelete, null,
+						2));
+
+					let deletePromises = [];
+					_.forEach(classifiersToDelete, (classifier) => {
+						deletePromises.push(this.deleteClassifier(classifier.classifier_id));
+					});
+
+					if (deletePromises.length > 0) {
+						Promise.all(deletePromises)
+							.then((deleteResults) => {
+								dfd.resolve('All old classifiers removed.');
+							})
+							.catch((err) => {
+								dfd.reject(err);
+							});
+					}
+					else {
+						dfd.resolve('No old classifiers to remove');
+					}
+				});
+		}
+	});
 	return dfd.promise;
 };
 
