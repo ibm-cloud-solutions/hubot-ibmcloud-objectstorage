@@ -1,0 +1,826 @@
+{
+  "total_rows": 26,
+  "offset": 0,
+  "rows": [
+    {
+      "id": "2001",
+      "key": [
+        "2016-04-07T16:25:43",
+        "2001",
+        0
+      ],
+      "value": "2001",
+      "doc": {
+        "_id": "2001",
+        "_rev": "1-b240045609fd8968a51a0b5c51d29586",
+        "fileName": "bridge.png",
+        "caption": "Bridge",
+        "contentType": "image/png",
+        "url": "https://dal.objectstorage.open.softlayer.com/v1/AUTH_d9d9b1ea03104e48aff47bbeac29022e/1001/bridge.png",
+        "width": 600,
+        "height": 900,
+        "tags": [
+          {
+            "label": "bridge",
+            "confidence": 75
+          },
+          {
+            "label": "city",
+            "confidence": 60
+          },
+          {
+            "label": "building",
+            "confidence": 50
+          }
+        ],
+        "location": {
+          "name": "Boston, Massachusetts",
+          "latitude": 34.53,
+          "longitude": 84.5,
+          "weather": {
+            "description": "Mostly Cloudy",
+            "temperature": 70,
+            "iconId": 27
+          }
+        },
+        "uploadedTs": "2016-04-07T16:25:43",
+        "userId": "1001",
+        "deviceId": "3001",
+        "type": "image"
+      }
+    },
+    {
+      "id": "2001",
+      "key": [
+        "2016-04-07T16:25:43",
+        "2001",
+        1
+      ],
+      "value": {
+        "_id": "1001"
+      },
+      "doc": {
+        "_id": "1001",
+        "_rev": "1-124302d0ac1df073728e5745d3d32417",
+        "name": "Peter Adams",
+        "type": "user"
+      }
+    },
+    {
+      "id": "2003",
+      "key": [
+        "2016-04-10T21:25:43",
+        "2003",
+        0
+      ],
+      "value": "2003",
+      "doc": {
+        "_id": "2003",
+        "_rev": "1-120e38ca5ff2145b452558c9732ab2a9",
+        "fileName": "church.png",
+        "caption": "Church",
+        "contentType": "image/png",
+        "url": "https://dal.objectstorage.open.softlayer.com/v1/AUTH_d9d9b1ea03104e48aff47bbeac29022e/1000/church.png",
+        "width": 600,
+        "height": 450,
+        "tags": [
+          {
+            "label": "nature",
+            "confidence": 99
+          },
+          {
+            "label": "sky",
+            "confidence": 91
+          },
+          {
+            "label": "mountain",
+            "confidence": 64
+          }
+        ],
+        "location": {
+          "name": "Tucson, Arizona",
+          "latitude": 34.53,
+          "longitude": 84.5,
+          "weather": {
+            "description": "Sunny",
+            "temperature": 70,
+            "iconId": 27
+          }
+        },
+        "uploadedTs": "2016-04-10T21:25:43",
+        "userId": "1000",
+        "deviceId": "3000",
+        "type": "image"
+      }
+    },
+    {
+      "id": "2003",
+      "key": [
+        "2016-04-10T21:25:43",
+        "2003",
+        1
+      ],
+      "value": {
+        "_id": "1000"
+      },
+      "doc": {
+        "_id": "1000",
+        "_rev": "1-2de4d31d66cc397c8e9a074763a342c3",
+        "name": "John Smith",
+        "type": "user"
+      }
+    },
+    {
+      "id": "2004",
+      "key": [
+        "2016-04-13T03:25:43",
+        "2004",
+        0
+      ],
+      "value": "2004",
+      "doc": {
+        "_id": "2004",
+        "_rev": "1-baef454405e7fda5ff12501ebc760f8b",
+        "fileName": "city.png",
+        "caption": "City",
+        "contentType": "image/png",
+        "url": "https://dal.objectstorage.open.softlayer.com/v1/AUTH_d9d9b1ea03104e48aff47bbeac29022e/1001/city.png",
+        "width": 600,
+        "height": 450,
+        "tags": [],
+        "location": {
+          "name": "New York, New York",
+          "latitude": 34.53,
+          "longitude": 84.5,
+          "weather": {
+            "description": "Mostly Sunny",
+            "temperature": 80,
+            "iconId": 27
+          }
+        },
+        "uploadedTs": "2016-04-13T03:25:43",
+        "userId": "1001",
+        "deviceId": "3001",
+        "type": "image"
+      }
+    },
+    {
+      "id": "2004",
+      "key": [
+        "2016-04-13T03:25:43",
+        "2004",
+        1
+      ],
+      "value": {
+        "_id": "1001"
+      },
+      "doc": {
+        "_id": "1001",
+        "_rev": "1-124302d0ac1df073728e5745d3d32417",
+        "name": "Peter Adams",
+        "type": "user"
+      }
+    },
+    {
+      "id": "2005",
+      "key": [
+        "2016-04-20T06:25:43",
+        "2005",
+        0
+      ],
+      "value": "2005",
+      "doc": {
+        "_id": "2005",
+        "_rev": "1-0bbc6cb175d3818b90adf8a63c446913",
+        "fileName": "concert.png",
+        "caption": "Concert",
+        "contentType": "image/png",
+        "url": "https://dal.objectstorage.open.softlayer.com/v1/AUTH_d9d9b1ea03104e48aff47bbeac29022e/1002/concert.png",
+        "width": 600,
+        "height": 400,
+        "tags": [
+          {
+            "label": "person",
+            "confidence": 90
+          }
+        ],
+        "location": {
+          "name": "Austin, Texas",
+          "latitude": 34.53,
+          "longitude": 84.5,
+          "weather": {
+            "description": "Mostly Sunny",
+            "temperature": 80,
+            "iconId": 27
+          }
+        },
+        "uploadedTs": "2016-04-20T06:25:43",
+        "userId": "1002",
+        "deviceId": "CFB36A36-5C84-4D20-A010-DB6B543FEA10",
+        "type": "image"
+      }
+    },
+    {
+      "id": "2005",
+      "key": [
+        "2016-04-20T06:25:43",
+        "2005",
+        1
+      ],
+      "value": {
+        "_id": "1002"
+      },
+      "doc": {
+        "_id": "1002",
+        "_rev": "1-c36ff5e934199ab20b0bcd0c4c24732d",
+        "name": "Sharon den Adel",
+        "type": "user"
+      }
+    },
+    {
+      "id": "2006",
+      "key": [
+        "2016-04-29T22:25:43",
+        "2006",
+        0
+      ],
+      "value": "2006",
+      "doc": {
+        "_id": "2006",
+        "_rev": "1-5db744dcb1ea9aeaa01deb9ad2d7b7c3",
+        "fileName": "flower_1.png",
+        "caption": "Flower",
+        "contentType": "image/png",
+        "url": "https://dal.objectstorage.open.softlayer.com/v1/AUTH_d9d9b1ea03104e48aff47bbeac29022e/1000/flower_1.png",
+        "width": 600,
+        "height": 400,
+        "tags": [
+          {
+            "label": "flower",
+            "confidence": 99
+          },
+          {
+            "label": "garden",
+            "confidence": 50
+          }
+        ],
+        "location": {
+          "name": "Marble Falls, Texas",
+          "latitude": 34.53,
+          "longitude": 84.5,
+          "weather": {
+            "description": "Mostly Cloudy",
+            "temperature": 80,
+            "iconId": 27
+          }
+        },
+        "uploadedTs": "2016-04-29T22:25:43",
+        "userId": "1000",
+        "deviceId": "3000",
+        "type": "image"
+      }
+    },
+    {
+      "id": "2006",
+      "key": [
+        "2016-04-29T22:25:43",
+        "2006",
+        1
+      ],
+      "value": {
+        "_id": "1000"
+      },
+      "doc": {
+        "_id": "1000",
+        "_rev": "1-2de4d31d66cc397c8e9a074763a342c3",
+        "name": "John Smith",
+        "type": "user"
+      }
+    },
+    {
+      "id": "2007",
+      "key": [
+        "2016-05-01T20:25:43",
+        "2007",
+        0
+      ],
+      "value": "2007",
+      "doc": {
+        "_id": "2007",
+        "_rev": "1-85aca42cddab59cc9c8bddf36d277528",
+        "fileName": "flower_2.png",
+        "caption": "Flower",
+        "contentType": "image/png",
+        "url": "https://dal.objectstorage.open.softlayer.com/v1/AUTH_d9d9b1ea03104e48aff47bbeac29022e/1001/flower_2.png",
+        "width": 600,
+        "height": 400,
+        "tags": [
+          {
+            "label": "flower",
+            "confidence": 93
+          },
+          {
+            "label": "tree",
+            "confidence": 75
+          }
+        ],
+        "location": {
+          "name": "Marble Falls, Texas",
+          "latitude": 34.53,
+          "longitude": 84.5,
+          "weather": {
+            "description": "Mostly Cloudy",
+            "temperature": 80,
+            "iconId": 27
+          }
+        },
+        "uploadedTs": "2016-05-01T20:25:43",
+        "userId": "1001",
+        "deviceId": "3001",
+        "type": "image"
+      }
+    },
+    {
+      "id": "2007",
+      "key": [
+        "2016-05-01T20:25:43",
+        "2007",
+        1
+      ],
+      "value": {
+        "_id": "1001"
+      },
+      "doc": {
+        "_id": "1001",
+        "_rev": "1-124302d0ac1df073728e5745d3d32417",
+        "name": "Peter Adams",
+        "type": "user"
+      }
+    },
+    {
+      "id": "2008",
+      "key": [
+        "2016-05-02T18:25:43",
+        "2008",
+        0
+      ],
+      "value": "2008",
+      "doc": {
+        "_id": "2008",
+        "_rev": "1-0a23dc8895f432d6cc44fdda2a734c1f",
+        "fileName": "nature.png",
+        "caption": "Nature",
+        "contentType": "image/png",
+        "url": "https://dal.objectstorage.open.softlayer.com/v1/AUTH_d9d9b1ea03104e48aff47bbeac29022e/1002/nature.png",
+        "width": 600,
+        "height": 399,
+        "tags": [
+          {
+            "label": "nature",
+            "confidence": 99
+          },
+          {
+            "label": "lake",
+            "confidence": 98
+          },
+          {
+            "label": "cloudy sky",
+            "confidence": 78
+          },
+          {
+            "label": "mountain",
+            "confidence": 64
+          }
+        ],
+        "location": {
+          "name": "Austin, Texas",
+          "latitude": 34.53,
+          "longitude": 84.5,
+          "weather": {
+            "description": "Mostly Sunny",
+            "temperature": 85,
+            "iconId": 27
+          }
+        },
+        "uploadedTs": "2016-05-02T18:25:43",
+        "userId": "1002",
+        "deviceId": "CFB36A36-5C84-4D20-A010-DB6B543FEA10",
+        "type": "image"
+      }
+    },
+    {
+      "id": "2008",
+      "key": [
+        "2016-05-02T18:25:43",
+        "2008",
+        1
+      ],
+      "value": {
+        "_id": "1002"
+      },
+      "doc": {
+        "_id": "1002",
+        "_rev": "1-c36ff5e934199ab20b0bcd0c4c24732d",
+        "name": "Sharon den Adel",
+        "type": "user"
+      }
+    },
+    {
+      "id": "2009",
+      "key": [
+        "2016-05-04T11:25:43",
+        "2009",
+        0
+      ],
+      "value": "2009",
+      "doc": {
+        "_id": "2009",
+        "_rev": "1-01b3f09a80d346beaa27e80aac7b0b86",
+        "fileName": "person.png",
+        "caption": "Person",
+        "contentType": "image/png",
+        "url": "https://dal.objectstorage.open.softlayer.com/v1/AUTH_d9d9b1ea03104e48aff47bbeac29022e/1000/person.png",
+        "width": 600,
+        "height": 900,
+        "tags": [
+          {
+            "label": "sunset",
+            "confidence": 37
+          }
+        ],
+        "location": {
+          "name": "Miami, Florida",
+          "latitude": 34.53,
+          "longitude": 84.5,
+          "weather": {
+            "description": "Mostly Sunny",
+            "temperature": 85,
+            "iconId": 27
+          }
+        },
+        "uploadedTs": "2016-05-04T11:25:43",
+        "userId": "1000",
+        "deviceId": "3000",
+        "type": "image"
+      }
+    },
+    {
+      "id": "2009",
+      "key": [
+        "2016-05-04T11:25:43",
+        "2009",
+        1
+      ],
+      "value": {
+        "_id": "1000"
+      },
+      "doc": {
+        "_id": "1000",
+        "_rev": "1-2de4d31d66cc397c8e9a074763a342c3",
+        "name": "John Smith",
+        "type": "user"
+      }
+    },
+    {
+      "id": "2010",
+      "key": [
+        "2016-05-05T13:25:43",
+        "2010",
+        0
+      ],
+      "value": "2010",
+      "doc": {
+        "_id": "2010",
+        "_rev": "1-0eaaa211256c84a194a14e02dfe1c4b8",
+        "fileName": "road.png",
+        "caption": "Road",
+        "contentType": "image/png",
+        "url": "https://dal.objectstorage.open.softlayer.com/v1/AUTH_d9d9b1ea03104e48aff47bbeac29022e/1001/road.png",
+        "width": 600,
+        "height": 402,
+        "tags": [
+          {
+            "label": "road",
+            "confidence": 89
+          },
+          {
+            "label": "mountain",
+            "confidence": 50
+          }
+        ],
+        "location": {
+          "name": "Austin, Texas",
+          "latitude": 34.53,
+          "longitude": 84.5,
+          "weather": {
+            "description": "Mostly Sunny",
+            "temperature": 85,
+            "iconId": 27
+          }
+        },
+        "uploadedTs": "2016-05-05T13:25:43",
+        "userId": "1001",
+        "deviceId": "3001",
+        "type": "image"
+      }
+    },
+    {
+      "id": "2010",
+      "key": [
+        "2016-05-05T13:25:43",
+        "2010",
+        1
+      ],
+      "value": {
+        "_id": "1001"
+      },
+      "doc": {
+        "_id": "1001",
+        "_rev": "1-124302d0ac1df073728e5745d3d32417",
+        "name": "Peter Adams",
+        "type": "user"
+      }
+    },
+    {
+      "id": "24c7489bbe5c3854bd75cf304e84c292",
+      "key": [
+        "2016-08-11T04:15:06",
+        "24c7489bbe5c3854bd75cf304e84c292",
+        0
+      ],
+      "value": "24c7489bbe5c3854bd75cf304e84c292",
+      "doc": {
+        "_id": "24c7489bbe5c3854bd75cf304e84c292",
+        "_rev": "1-31b4c40c28469703334304880d734d4e",
+        "height": 401,
+        "location": {
+          "name": "Durham, NC",
+          "longitude": -78.917509,
+          "latitude": 35.890231
+        },
+        "contentType": "image/png",
+        "uploadedTs": "2016-08-11T04:15:06",
+        "fileName": "08-11-2016_001506.png",
+        "width": 600,
+        "userId": "159142737847217",
+        "deviceId": "4C595774-B9C4-4E7E-B513-E238713BD429",
+        "type": "image",
+        "url": "https://dal.objectstorage.open.softlayer.com/v1/AUTH_d9d9b1ea03104e48aff47bbeac29022e/159142737847217/08-11-2016_001506.png",
+        "caption": "lol"
+      }
+    },
+    {
+      "id": "24c7489bbe5c3854bd75cf304e84c292",
+      "key": [
+        "2016-08-11T04:15:06",
+        "24c7489bbe5c3854bd75cf304e84c292",
+        1
+      ],
+      "value": {
+        "_id": "159142737847217"
+      },
+      "doc": {
+        "_id": "159142737847217",
+        "_rev": "1-22cc4b5bbe86f606865ee57da3fcbe61",
+        "name": "Tony Pisvt",
+        "type": "user"
+      }
+    },
+    {
+      "id": "c1326bec9cd7cb475bf227846054f370",
+      "key": [
+        "2016-08-16T18:48:05",
+        "c1326bec9cd7cb475bf227846054f370",
+        0
+      ],
+      "value": "c1326bec9cd7cb475bf227846054f370",
+      "doc": {
+        "_id": "c1326bec9cd7cb475bf227846054f370",
+        "_rev": "2-a1ce42a91955f16edaad4916b796f786",
+        "deviceId": "0E747D77-1389-41DD-BDFF-B8E6B65461E7",
+        "url": "https://dal.objectstorage.open.softlayer.com/v1/AUTH_d9d9b1ea03104e48aff47bbeac29022e/anonymous/08-16-2016_144800.png",
+        "fileName": "08-16-2016_144800.png",
+        "caption": "Kurtis Image 1",
+        "contentType": "image/png",
+        "height": 305,
+        "uploadedTs": "2016-08-16T18:48:05",
+        "tags": [
+          {
+            "confidence": 0.999998,
+            "label": "animal"
+          },
+          {
+            "confidence": 0.999992,
+            "label": "mammal"
+          },
+          {
+            "confidence": 0.990987,
+            "label": "dog"
+          },
+          {
+            "confidence": 0.645656,
+            "label": "beagle"
+          },
+          {
+            "confidence": 0.425557,
+            "label": "puppy"
+          },
+          {
+            "confidence": 0.401312,
+            "label": "pet"
+          },
+          {
+            "confidence": 0.268941,
+            "label": "cute"
+          }
+        ],
+        "location": {
+          "longitude": -78.917509,
+          "latitude": 35.890231,
+          "name": "Durham, NC",
+          "weather": {
+            "iconId": 27,
+            "description": "Mostly Sunny",
+            "temperature": 85
+          }
+        },
+        "type": "image",
+        "width": 593,
+        "userId": "anonymous"
+      }
+    },
+    {
+      "id": "c1326bec9cd7cb475bf227846054f370",
+      "key": [
+        "2016-08-16T18:48:05",
+        "c1326bec9cd7cb475bf227846054f370",
+        1
+      ],
+      "value": {
+        "_id": "anonymous"
+      },
+      "doc": {
+        "_id": "anonymous",
+        "_rev": "1-31c677b60eb4aaaa200e7543837a558b",
+        "name": "Anonymous",
+        "type": "user"
+      }
+    },
+    {
+      "id": "c80579aac0757c803b6f74ced429186e",
+      "key": [
+        "2016-08-17T01:01:06",
+        "c80579aac0757c803b6f74ced429186e",
+        0
+      ],
+      "value": "c80579aac0757c803b6f74ced429186e",
+      "doc": {
+        "_id": "c80579aac0757c803b6f74ced429186e",
+        "_rev": "2-579b3b9969a292134f4ed31d68a9db6b",
+        "deviceId": "2DD49786-F605-4E2C-85F9-A70290B3760F",
+        "url": "https://dal.objectstorage.open.softlayer.com/v1/AUTH_d9d9b1ea03104e48aff47bbeac29022e/anonymous/08-16-2016_210102.png",
+        "fileName": "08-16-2016_210102.png",
+        "caption": "TestKurtImg2",
+        "contentType": "image/png",
+        "height": 305,
+        "uploadedTs": "2016-08-17T01:01:06",
+        "tags": [
+          {
+            "confidence": 0.999998,
+            "label": "animal"
+          },
+          {
+            "confidence": 0.999992,
+            "label": "mammal"
+          },
+          {
+            "confidence": 0.990987,
+            "label": "dog"
+          },
+          {
+            "confidence": 0.645656,
+            "label": "beagle"
+          },
+          {
+            "confidence": 0.425557,
+            "label": "puppy"
+          },
+          {
+            "confidence": 0.401312,
+            "label": "pet"
+          },
+          {
+            "confidence": 0.268941,
+            "label": "cute"
+          }
+        ],
+        "location": {
+          "longitude": -78.917509,
+          "latitude": 35.890231,
+          "name": "Durham, NC",
+          "weather": {
+            "iconId": 27,
+            "description": "Mostly Sunny",
+            "temperature": 85
+          }
+        },
+        "type": "image",
+        "width": 593,
+        "userId": "anonymous"
+      }
+    },
+    {
+      "id": "c80579aac0757c803b6f74ced429186e",
+      "key": [
+        "2016-08-17T01:01:06",
+        "c80579aac0757c803b6f74ced429186e",
+        1
+      ],
+      "value": {
+        "_id": "anonymous"
+      },
+      "doc": {
+        "_id": "anonymous",
+        "_rev": "1-31c677b60eb4aaaa200e7543837a558b",
+        "name": "Anonymous",
+        "type": "user"
+      }
+    },
+    {
+      "id": "fcbbda1e849d803e00653af22ec3920c",
+      "key": [
+        "2016-08-17T01:30:23",
+        "fcbbda1e849d803e00653af22ec3920c",
+        0
+      ],
+      "value": "fcbbda1e849d803e00653af22ec3920c",
+      "doc": {
+        "_id": "fcbbda1e849d803e00653af22ec3920c",
+        "_rev": "2-87792a37258e7d8e9f8786875db578ff",
+        "deviceId": "2DD49786-F605-4E2C-85F9-A70290B3760F",
+        "url": "https://dal.objectstorage.open.softlayer.com/v1/AUTH_d9d9b1ea03104e48aff47bbeac29022e/anonymous/08-16-2016_213022.png",
+        "fileName": "08-16-2016_213022.png",
+        "caption": "KWaterThat1",
+        "contentType": "image/png",
+        "height": 600,
+        "uploadedTs": "2016-08-17T01:30:23",
+        "tags": [
+          {
+            "confidence": 0.99394,
+            "label": "water"
+          },
+          {
+            "confidence": 0.817574,
+            "label": "waterfall"
+          },
+          {
+            "confidence": 0.574443,
+            "label": "river"
+          },
+          {
+            "confidence": 0.475021,
+            "label": "rock"
+          },
+          {
+            "confidence": 0.354344,
+            "label": "nature"
+          },
+          {
+            "confidence": 0.331812,
+            "label": "mountain"
+          }
+        ],
+        "location": {
+          "longitude": -78.917509,
+          "latitude": 35.890231,
+          "name": "Durham, NC",
+          "weather": {
+            "iconId": 27,
+            "description": "Mostly Sunny",
+            "temperature": 85
+          }
+        },
+        "type": "image",
+        "width": 401,
+        "userId": "anonymous"
+      }
+    },
+    {
+      "id": "fcbbda1e849d803e00653af22ec3920c",
+      "key": [
+        "2016-08-17T01:30:23",
+        "fcbbda1e849d803e00653af22ec3920c",
+        1
+      ],
+      "value": {
+        "_id": "anonymous"
+      },
+      "doc": {
+        "_id": "anonymous",
+        "_rev": "1-31c677b60eb4aaaa200e7543837a558b",
+        "name": "Anonymous",
+        "type": "user"
+      }
+    }
+  ]
+}

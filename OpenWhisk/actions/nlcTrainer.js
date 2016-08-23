@@ -16,6 +16,7 @@ function main(params) {
 	 *  @param {string} nlcUsername (required) - username for NLC
 	 *  @param {string} nlcPassword (required) - password for NLC
 	 *  @param {string} nlcUrl (required) - URL for NLC
+	 *  @param {string} nlcClassifier (optional) - Name used for classifier associated with this action.
 	 *  @param {string} logLevel (optional) - Set the log level used for this action.  Default is INFO.
 	 *  @param {string} nlcForceTraining (optional) - Set to "true" to skip training checks and force NLC training
 	 *  @param {string} NLC_LIMIT_NUM_CLASSES (optional) - Max # of class to train NLC with.
@@ -31,15 +32,14 @@ function main(params) {
 	log4js.configure({
 		appenders: [
 			{ type: 'console' }
-		],
-		replaceConsole: true
+		]
 	});
 	var logger = log4js.getLogger();
 	logger.setLevel(params.logLevel || 'INFO');
 
 	const TAG = 'nlcTrainer';
+	const classifierName = params.nlcClassifier || 'cloudbot-obj-storage-classifier';
 
-	var classifierName = 'cloudbot-obj-storage-classifier';
 	var trainingFrequency = 60 * 60 * 1000; // default for 1 hour minimum between training
 	var nlc;
 	var cloudantDb;
@@ -47,10 +47,6 @@ function main(params) {
 
 	// This promise is the returned to OpenWhisk and implements the main flow.
 	return new Promise((resolve, reject) => {
-		if (params.nlcClassifier) {
-			classifierName = params.nlcClassifier;
-		}
-
 		if (validateParams()) {
 			nlc = watson.natural_language_classifier({
 				url: params.nlcUrl,
@@ -168,14 +164,6 @@ function main(params) {
 		});
 	}
 
-	// This method is used to verify that if training is triggered via OpenWhisk cloudant change feed, that the changed
-	// document has tags associated with it.  This is needed because the BluePic flow first creates the cloudant doc
-	// without tags then modifies the doc with the tags.  Without this check we would train NLC before the tags are available
-	// and the image that triggered training would not be added to the NLC training data.
-	function tagsInCloudant() {
-		return params._id && params._rev && params.type === 'image' && params.tags;
-	}
-
 	// Decides if we should train.  Decision is based on the fact that we haven't created a new classifier in a while
 	// and no other classifier is currently training.
 	function shouldTrain(existingClassifiers) {
@@ -186,8 +174,12 @@ function main(params) {
 			shouldTrain = true;
 		}
 		else {
-			if (!isLocalRun(params) && !tagsInCloudant()) {
-				logger.info(`${TAG}: should not train, because changed cloudant doc does not include tags.`);
+			// The cloudant feed OpenWhisk trigger includes doc, so _id and _rev will be set when triggered by cloudant.
+			// The additional checks are making sure that the doc is an image and the image has tags.
+			// Needed b/c BluePic first creates the image without tags, then updates it.  Without this check we
+			// would trigger training before the tags are added.
+			if ((params._id && params._rev) && (params.type !== 'image' || !params.tags)) {
+				logger.info(`${TAG}: should not train, because no new image tags are included in the cloudant doc.`);
 			}
 			else if (!existingClassifiers.length) {
 				logger.info(`${TAG}: should train, because there are no preexisting classifiers.`);
@@ -422,16 +414,19 @@ function main(params) {
 	}
 }
 
-function isLocalRun(params) {
-	return params.localRun === 'true';
-}
-
 // Allows us to run this code locally (outside OpenWhisk) via setting localRun env var.
-if (isLocalRun(process.env)) {
+if (process.env.localRun === 'true') {
 	main(process.env).then((result) => {
 		console.log(JSON.stringify(result, null, 2));
 	}).catch((error) => {
 		console.error(error);
 	});
+}
+
+// Allows automated test to treat this action as a node module.
+if (process.env.HUBOT_AUTOMATED_TEST === 'true') {
+	module.exports = {
+		main: main
+	};
 }
 
