@@ -79,7 +79,7 @@ module.exports = (robot, res) => {
 			processObjectSearch(robot, res, parameters.searchphrase);
 		}
 		else {
-			robot.logger.error(`${TAG}: Error extracting container name from text [${res.message.text}].`);
+			robot.logger.error(`${TAG}: Error extracting search phrase from text [${res.message.text}].`);
 			robot.emit('ibmcloud.formatter', {
 				response: res,
 				message: i18n.__('cognitive.parse.problem.search')

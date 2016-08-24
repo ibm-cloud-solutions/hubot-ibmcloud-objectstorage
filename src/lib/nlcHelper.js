@@ -16,7 +16,7 @@ const _ = require('lodash');
  *        context.robot.logger = Hubot Logger
  *        context.settings.nlc_url = Watson NLC API URL (OPTIONAL, defaults to https://gateway.watsonplatform.net/natural-language-classifier/api)
  *        context.settings.nlc_username = Watson NLC username (REQUIRED)
- *        context.settings.password = Watson NLC password (REQUIRED)
+ *        context.settings.nlc_password = Watson NLC password (REQUIRED)
  *        context.nlc_version = Watson NLC version (OPTIONAL, defaults to V1)
  * @constructor
  */
@@ -102,7 +102,6 @@ NLCHelper.prototype.classify = function(text) {
 				},
 				(err, response) => {
 					if (err) {
-						this.classifier_cache = undefined;
 						dfd.reject(err);
 					}
 					else {
@@ -111,7 +110,6 @@ NLCHelper.prototype.classify = function(text) {
 				});
 		}
 	}).catch((err) => {
-		this.classifier_cache = undefined;
 		dfd.reject(err);
 	});
 	return dfd.promise;
@@ -119,77 +117,59 @@ NLCHelper.prototype.classify = function(text) {
 
 /**
  * Helper method to finds a classifier which is available (training completed)
- * and with the most recent creation date.  If none are 'Available' then find
- * the most recent classifier that started training.  If none are training,
- * start the training.
+ * and with the most recent creation date.
  *
  * @return Promise When resolved it returns a JSON object with the classifier information.
  */
 NLCHelper.prototype._getClassifier = function() {
 	let dfd = Promise.defer();
 
-	if (this.classifier_cache) {
-		this.logger.debug(`${TAG}: Using cached NLC classifier ${this.classifier_cache.classifier_id}`);
-		dfd.resolve(this.classifier_cache);
-	}
-	else {
-		// List all the classifiers
-		this.nlc.list({}, (err, response) => {
-			if (err) {
-				this.logger.error('Error getting available classifiers.', err);
-				dfd.reject('Error getting available classifiers.' + JSON.stringify(err, null, 2));
+	// List all the classifiers
+	this.nlc.list({}, (err, response) => {
+		if (err) {
+			this.logger.error('Error getting available classifiers.', err);
+			dfd.reject('Error getting available classifiers.' + JSON.stringify(err, null, 2));
+		}
+		else {
+			// filter out classifiers that have a different name
+			let filteredClassifiers = response.classifiers.filter((classifier) => {
+				return classifier.name === this.opts.classifierName;
+			});
+
+			if (filteredClassifiers.length < 1) {
+				dfd.reject(`No classifiers found under [${this.opts.classifierName}]`);
 			}
 			else {
-				// filter out classifiers that have a different name
-				let filteredClassifiers = response.classifiers.filter((classifier) => {
-					return classifier.name === this.opts.classifierName;
+				let checkStatus = [];
+				filteredClassifiers.map((classifier) => {
+					checkStatus.push(this.classifierStatus(classifier.classifier_id));
 				});
 
-				if (filteredClassifiers.length < 1) {
-					dfd.reject(`No classifiers found under [${this.opts.classifierName}]`);
-				}
-				else {
-					let checkStatus = [];
-					filteredClassifiers.map((classifier) => {
-						checkStatus.push(this.classifierStatus(classifier.classifier_id));
+				// Get the status of all classifiers
+				Promise.all(checkStatus).then((classifierStatus) => {
+					// try to find the most recent available.  or most recent that started training.
+					let sortedClassifiers = classifierStatus.sort((a, b) => {
+						return new Date(b.created) - new Date(a.created);
 					});
 
-					// Get the status of all classifiers
-					Promise.all(checkStatus).then((classifierStatus) => {
-						// try to find the most recent available.  or most recent that started training.
-						let sortedClassifiers = classifierStatus.sort((a, b) => {
-							return new Date(b.created) - new Date(a.created);
-						});
-
-						this.classifierTraining = undefined;
-						for (let i = 0; i < sortedClassifiers.length; i++) {
-							if (sortedClassifiers[i].name === this.opts.classifierName) {
-								if (sortedClassifiers[i].status === 'Available') {
-									this.classifier_cache = sortedClassifiers[i];
-									dfd.resolve(sortedClassifiers[i]);
-									return;
-								}
-								else if (sortedClassifiers[i].status === 'Training' && !this.classifierTraining) {
-									this.classifierTraining = sortedClassifiers[i];
-								}
+					for (let i = 0; i < sortedClassifiers.length; i++) {
+						if (sortedClassifiers[i].name === this.opts.classifierName) {
+							if (sortedClassifiers[i].status === 'Available') {
+								dfd.resolve(sortedClassifiers[i]);
+								return;
 							}
 						}
+					}
 
-						if (this.classifierTraining) {
-							dfd.resolve(this.classifierTraining);
-						}
-						else {
-							this.logger.error(new Error(`No classifiers available under [${this.opts.classifierName}]`));
-							dfd.reject(`No classifiers available under [${this.opts.classifierName}]`);
-						}
-					}).catch((error) => {
-						this.logger.error('Error getting a classifier.', error);
-						dfd.reject('Error getting a classifier.' + JSON.stringify(error));
-					});
-				}
+					this.logger.error(new Error(`No classifiers available under [${this.opts.classifierName}]`));
+					dfd.reject(`No classifiers available under [${this.opts.classifierName}]`);
+				}).catch((error) => {
+					this.logger.error('Error getting a classifier.', error);
+					dfd.reject('Error getting a classifier.' + JSON.stringify(error));
+				});
 			}
-		});
-	}
+		}
+	});
 	return dfd.promise;
 };
 

@@ -61,8 +61,4 @@ if (!settings.nlc_objectstorage_classifier) {
 	console.log('HUBOT_WATSON_NLC_OJBECTSTORAGE_CLASSIFIER_NAME not set');
 }
 
-settings.syncInterval = parseInt(settings.syncInterval, 10);
-settings.lowThreshold = parseFloat(settings.lowThreshold);
-settings.highThreshold = parseFloat(settings.highThreshold);
-
 module.exports = settings;
