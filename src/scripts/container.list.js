@@ -20,7 +20,8 @@
  */
 'use strict';
 
-const Helper = require('../lib/helper');
+const env = require('../lib/env');
+const Helper = require('../lib/paramHelper');
 const path = require('path');
 const TAG = path.basename(__filename);
 const _ = require('lodash');
@@ -47,7 +48,8 @@ module.exports = (robot, res) => {
 	if (!helper) {
 		helper = new Helper({
 			robot: robot,
-			res: res
+			res: res,
+			settings: env
 		});
 		if (helper.initializedSuccessfully()) {
 			storage = helper.getObjectStorage();

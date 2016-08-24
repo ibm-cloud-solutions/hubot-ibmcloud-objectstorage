@@ -13,12 +13,6 @@ const path = require('path');
 const TAG = path.basename(__filename);
 const _ = require('lodash');
 
-const HUBOT_OBJECT_STORAGE_AUTH_URL = process.env.HUBOT_OBJECT_STORAGE_AUTH_URL;
-const HUBOT_OBJECT_STORAGE_USER_ID = process.env.HUBOT_OBJECT_STORAGE_USER_ID;
-const HUBOT_OBJECT_STORAGE_PASSWORD = process.env.HUBOT_OBJECT_STORAGE_PASSWORD;
-const HUBOT_OBJECT_STORAGE_PROJECT_ID = process.env.HUBOT_OBJECT_STORAGE_PROJECT_ID;
-const HUBOT_OBJECT_STORAGE_BLUEMIX_REGION = process.env.HUBOT_OBJECT_STORAGE_BLUEMIX_REGION || 'dallas';
-
 const i18n = new (require('i18n-2'))({
 	locales: ['en'],
 	extension: '.json',
@@ -38,19 +32,19 @@ function ObjectStore(options) {
 	this.initSuccess = false;
 
 	this.missingEnv;
-	if (!HUBOT_OBJECT_STORAGE_AUTH_URL || HUBOT_OBJECT_STORAGE_AUTH_URL.length === 0) {
+	if (!options.settings.os_auth_url || options.settings.os_auth_url.length === 0) {
 		this.missingEnv = 'HUBOT_OBJECT_STORAGE_AUTH_URL';
 	}
-	else if (!HUBOT_OBJECT_STORAGE_USER_ID || HUBOT_OBJECT_STORAGE_USER_ID.length === 0) {
+	else if (!options.settings.os_user_id || options.settings.os_user_id.length === 0) {
 		this.missingEnv = 'HUBOT_OBJECT_STORAGE_USER_ID';
 	}
-	else if (!HUBOT_OBJECT_STORAGE_PASSWORD || HUBOT_OBJECT_STORAGE_PASSWORD.length === 0) {
+	else if (!options.settings.os_password || options.settings.os_password.length === 0) {
 		this.missingEnv = 'HUBOT_OBJECT_STORAGE_PASSWORD';
 	}
-	else if (!HUBOT_OBJECT_STORAGE_PROJECT_ID || HUBOT_OBJECT_STORAGE_PROJECT_ID.length === 0) {
+	else if (!options.settings.os_project_id || options.settings.os_project_id.length === 0) {
 		this.missingEnv = 'HUBOT_OBJECT_STORAGE_PROJECT_ID';
 	}
-	else if (!HUBOT_OBJECT_STORAGE_BLUEMIX_REGION || HUBOT_OBJECT_STORAGE_BLUEMIX_REGION.length === 0) {
+	else if (!options.settings.os_bluemix_region || options.settings.os_bluemix_region.length === 0) {
 		this.missingEnv = 'HUBOT_OBJECT_STORAGE_BLUEMIX_REGION';
 	}
 
@@ -58,11 +52,11 @@ function ObjectStore(options) {
 		this.initSuccess = true;
 	}
 
-	this.authUrl = HUBOT_OBJECT_STORAGE_AUTH_URL;
-	this.projectId = HUBOT_OBJECT_STORAGE_PROJECT_ID;
-	this.userId = HUBOT_OBJECT_STORAGE_USER_ID;
-	this.password = HUBOT_OBJECT_STORAGE_PASSWORD;
-	this.region = HUBOT_OBJECT_STORAGE_BLUEMIX_REGION;
+	this.authUrl = options.settings.os_auth_url;
+	this.projectId = options.settings.os_project_id;
+	this.userId = options.settings.os_user_id;
+	this.password = options.settings.os_password;
+	this.region = options.settings.os_bluemix_region;
 
 	return this;
 }
@@ -85,7 +79,7 @@ ObjectStore.prototype.checkAuth = function() {
 		return Promise.resolve();
 	}
 	else {
-		return new Promise(function(resolve, reject) {
+		return new Promise((resolve, reject) => {
 			var d = {
 				auth: {
 					identity: {
@@ -112,7 +106,7 @@ ObjectStore.prototype.checkAuth = function() {
 			request.post({
 				url: url,
 				json: d
-			}, function(err, res) {
+			}, (err, res) => {
 				if (err) {
 					os.logger.error(`${TAG}: ` + 'objectstore', 'checkAuth', err);
 					return reject(err);
@@ -279,14 +273,19 @@ ObjectStore.prototype.getObject = function(containerName, objectName) {
 				headers: {
 					'X-AUTH-TOKEN': os.token
 				}
-			}).on('error', function(err) {
+			}).on('error', (err) => {
 				os.logger.error(`${TAG}: Object ${objectName} was not found in container ${containerName}.`, err);
 				reject(new Error(`Object ${objectName} was not found in container ${containerName}.`));
-			}).on('complete', function() {
-				resolve({
-					name: objectName,
-					path: path
-				});
+			}).on('complete', function(res) {
+				if (res.statusCode === 200) {
+					resolve({
+						name: objectName,
+						path: path
+					});
+				}
+				else {
+					reject(new Error(`Object ${objectName} could not be downloaded from container ${containerName}.`));
+				}
 			}).pipe(fs.createWriteStream(path, {
 				autoClose: true
 			}));

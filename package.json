@@ -11,10 +11,12 @@
     "start": "source config/env && hubot -a shell",
     "slack": "source config/env && hubot -a slack",
     "facebook": "source config/env && hubot -a fb",
-    "lint": "eslint src/**/*.js test/*.js index.js",
+    "lint": "eslint src/**/*.js test/*.js index.js OpenWhisk/actions/*.js",
     "postinstall": "initDb src/nlc/NLC.json",
     "test": ". test/.env && mocha test",
-    "coverage": ". test/.env && istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage"
+    "coverage": ". test/.env && istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage",
+    "coverage-local": ". test/.env && istanbul cover -x '**/tools/**' --include-all-sources --report lcov --report cobertura --report text --dir ./gh-pages/coverage _mocha -- test",
+    "whisk": "source OpenWhisk/env && node OpenWhisk/actions/nlcTrainer.js"
   },
   "author": "ibm-cloud-solutions",
   "license": "Apache-2.0",
@@ -36,7 +38,9 @@
     "mocha": "^2.4.5",
     "mocha-sprinkles": "^2.2.1",
     "nock": "^8.0.0",
-    "rewire": "2.5.1"
+    "rewire": "2.5.1",
+    "cloudant": "^1.4.1",
+    "log4js": "^0.6.36"
   },
   "peerDependencies": {
     "hubot": "^2.19.0",
@@ -51,13 +55,14 @@
     "index.js"
   ],
   "dependencies": {
-    "hubot-ibmcloud-cognitive-lib": ">=0.0.26",
+    "hubot-conversation": "^1.1.1",
     "hubot-ibmcloud-activity-emitter": ">=0.0.3",
+    "hubot-ibmcloud-cognitive-lib": ">=0.0.26",
     "hubot-ibmcloud-logger": ">=0.0.19",
     "hubot-ibmcloud-utils": ">=0.0.8",
-    "hubot-conversation": "^1.1.1",
     "lodash": "^4.13.1",
-    "request": "^2.73.0"
+    "request": "^2.73.0",
+    "watson-developer-cloud": "^2.1.4"
   },
   "keywords": [
     "hubot",
@@ -65,8 +70,8 @@
     "watson",
     "ibm",
     "slack",
-		"object storage",
-		"cloud",
-		"ibm cloud"
+    "object storage",
+    "cloud",
+    "ibm cloud"
   ]
 }

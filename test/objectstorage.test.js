@@ -35,6 +35,7 @@ i18n.setLocale('en');
 const timeout = 5000;
 
 const HUBOT_OBJECT_STORAGE_AUTH_URL = process.env.HUBOT_OBJECT_STORAGE_AUTH_URL;
+const NLC_URL = process.env.VCAP_SERVICES_NATURAL_LANGUAGE_CLASSIFIER_0_CREDENTIALS_URL || process.env.HUBOT_WATSON_NLC_URL;
 const FAKE_OBJECT_STORAGE_ENDPOINT = 'http://storestuff.com';
 const TEST_CONTAINER = {
 	name: 'TestContainer',
@@ -217,6 +218,60 @@ describe('Test test via Slack', function() {
 		});
 	});
 
+	context('user calls `objectstorage search`', function() {
+		beforeEach(function() {
+			room.robot.adapterName = 'slack';
+			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/').query({
+				format: 'json'
+			}).reply(200, [TEST_CONTAINER]);
+			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/' + TEST_CONTAINER.name).query({
+				format: 'json'
+			}).reply(200, [TEST_CONTAINER_OBJECTS]);
+			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[0].title).query({
+				format: 'json'
+			}).reply(200, 'This is the text');
+			nock(NLC_URL).get('/v1/classifiers').reply(200, {classifiers: [
+				{
+					"classifier_id": "good",
+					"url": "https://foo.com/v1/classifiers/good",
+					"name": "cloudbot-obj-storage-classifier",
+					"language": "en",
+					"created": "2016-08-22T15:08:28.176Z"
+				}
+			]});
+
+			nock(NLC_URL).get('/v1/classifiers/good').reply(200, {
+				"classifier_id": "good",
+				"name": "cloudbot-obj-storage-classifier",
+				"language": "en",
+				"created": "2016-08-22T15:08:28.176Z",
+				"url": "https://foo.com/v1/classifiers/good",
+				"status": "Available",
+				"status_description": "The classifier instance is now available and is ready to take classifier requests."
+			});
+
+
+			nock(NLC_URL).post('/v1/classifiers/good/classify', {"text": "ocean with birds"}).reply(200, {
+				classifier_id: 'good',
+				url: 'https://foo.com/v1/classifiers/good',
+				text: 'ocean with birds',
+				top_class: '/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[0].title,
+				classes: [{
+					class_name: '/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[0].title,
+					confidence: 0.8865453325314453
+				}]
+			});
+
+			return room.user.say('mimiron', '@hubot objectstorage search ocean with birds');
+		});
+
+		it('should search for a file and upload to adapter', function() {
+			return waitForMessageQueue(room, 3).then(() => {
+				expect(room.messages[1]).to.eql(['hubot', '@mimiron ' + i18n.__('objectstore.search.object')]);
+			});
+		});
+	});
+
 	context('user calls `objectstorage help`', function() {
 		beforeEach(function() {
 			return room.user.say('mimiron', '@hubot objectstorage help');
@@ -230,6 +285,8 @@ describe('Test test via Slack', function() {
 				'help.objectstorage.container.details') + '\n';
 			help += 'hubot objectstorage retrieve <container> <object> - ' + i18n.__(
 				'help.objectstorage.retrieve.object') + '\n';
+			help += 'hubot objectstorage search <searchPhrase> - ' + i18n.__(
+					'help.objectstorage.search') + '\n';
 			expect(room.messages[1]).to.eql(['hubot', '@mimiron \n' + help]);
 		});
 	});

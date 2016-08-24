@@ -51,6 +51,24 @@
 		  	]
 		},
 		{
+			"class": "objectstorage.search.object",
+			"description": "Search for an object from object storage container",
+			"emittarget": "objectstorage.search.object",
+			"texts": [
+				"Search for an object in a container",
+				"Find a file in a container",
+				"Can I get the file from my storage",
+				"Find a picture of"
+				],
+			"parameters" : [
+				{
+					"name": "searchphrase",
+					"type": "entity",
+					"prompt": "OK. What is the search phrase?"
+				}
+		  	]
+		},
+		{
 			"class": "objectstorage.container.help",
 			"description": "Help with object storage",
 			"emittarget": "objectstorage.container.help",

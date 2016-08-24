@@ -19,7 +19,9 @@
 
 const path = require('path');
 const TAG = path.basename(__filename);
-const Helper = require('../lib/helper');
+const Helper = require('../lib/paramHelper');
+const env = require('../lib/env');
+
 
 const i18n = new (require('i18n-2'))({
 	locales: ['en'],
@@ -42,7 +44,8 @@ module.exports = (robot, res) => {
 	if (!helper) {
 		helper = new Helper({
 			robot: robot,
-			res: res
+			res: res,
+			settings: env
 		});
 		if (helper.initializedSuccessfully()) {
 			storage = helper.getObjectStorage();
@@ -61,7 +64,9 @@ module.exports = (robot, res) => {
 	});
 
 	// Fixed command match
-	robot.respond(OBJECTSTORAGE_HELP, {id: 'hubot.help'}, (res) => {
+	robot.respond(OBJECTSTORAGE_HELP, {
+		id: 'hubot.help'
+	}, (res) => {
 		processObjectStorageHelp(robot, res);
 	});
 
@@ -84,6 +89,8 @@ module.exports = (robot, res) => {
 			'help.objectstorage.container.details') + '\n';
 		help += `${robot.name} objectstorage retrieve <container> <object> - ` + i18n.__(
 			'help.objectstorage.retrieve.object') + '\n';
+		help += `${robot.name} objectstorage search <searchPhrase> - ` + i18n.__(
+			'help.objectstorage.search') + '\n';
 
 		robot.emit('ibmcloud.formatter', {
 			response: res,

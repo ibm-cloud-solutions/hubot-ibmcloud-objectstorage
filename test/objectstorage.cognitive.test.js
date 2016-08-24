@@ -26,6 +26,7 @@ i18n.setLocale('en');
 
 /* eslint quote-props:0, quotes:0*/
 
+const NLC_URL = process.env.VCAP_SERVICES_NATURAL_LANGUAGE_CLASSIFIER_0_CREDENTIALS_URL || process.env.HUBOT_WATSON_NLC_URL;
 const HUBOT_OBJECT_STORAGE_AUTH_URL = process.env.HUBOT_OBJECT_STORAGE_AUTH_URL;
 const FAKE_OBJECT_STORAGE_ENDPOINT = 'http://storestuff.com';
 const TEST_CONTAINER = {
@@ -228,6 +229,63 @@ describe('Interacting with Bluemix services via Slack / Natural Language', funct
 
 			var res = { message: {text: 'Get an object from the container', user: { id: 'mimiron'}}, response: room };
 			room.robot.emit('objectstorage.retrieve.object', res);
+		});
+	});
+
+	context('user calls `objectstorage search`', function() {
+		beforeEach(function() {
+			room.robot.adapterName = 'slack';
+			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/').query({
+				format: 'json'
+			}).reply(200, [TEST_CONTAINER]);
+			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/' + TEST_CONTAINER.name).query({
+				format: 'json'
+			}).reply(200, [TEST_CONTAINER_OBJECTS]);
+			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[0].title).query({
+				format: 'json'
+			}).reply(200, 'This is the text');
+			nock(NLC_URL).get('/v1/classifiers').reply(200, {classifiers: [
+				{
+					"classifier_id": "good",
+					"url": "https://foo.com/v1/classifiers/good",
+					"name": "cloudbot-obj-storage-classifier",
+					"language": "en",
+					"created": "2016-08-22T15:08:28.176Z"
+				}
+			]});
+
+			nock(NLC_URL).get('/v1/classifiers/good').reply(200, {
+				"classifier_id": "good",
+				"name": "cloudbot-obj-storage-classifier",
+				"language": "en",
+				"created": "2016-08-22T15:08:28.176Z",
+				"url": "https://foo.com/v1/classifiers/good",
+				"status": "Available",
+				"status_description": "The classifier instance is now available and is ready to take classifier requests."
+			});
+
+
+			nock(NLC_URL).post('/v1/classifiers/good/classify', {"text": "ocean with birds"}).reply(200, {
+				classifier_id: 'good',
+				url: 'https://foo.com/v1/classifiers/good',
+				text: 'ocean with birds',
+				top_class: '/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[0].title,
+				classes: [{
+					class_name: '/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[0].title,
+					confidence: 0.8865453325314453
+				}]
+			});
+		});
+
+		it('should recognize command and respond accordingly', function(done) {
+			// Listens for dialog response.
+			room.robot.on('ibmcloud.formatter', (event) => {
+				expect(event.message).to.eql(i18n.__('cognitive.parse.problem.search'));
+				done();
+			});
+
+			var res = { message: {text: 'Search for an object in a container', user: { id: 'mimiron'}}, response: room };
+			room.robot.emit('objectstorage.search.object', res);
 		});
 	});
 

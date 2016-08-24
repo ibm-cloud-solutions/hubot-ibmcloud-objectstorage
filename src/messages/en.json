@@ -1,10 +1,12 @@
 {
 	"cognitive.parse.problem.details": "I'm having problems understanding the name of your container. Try using *objectstorage container details <container>*",
 	"cognitive.parse.problem.retrieve": "I'm having problems understanding the name of your container or object. Try using *objectstorage retrieve <container> <object>*",
+	"cognitive.parse.problem.search": "I'm having problems understanding the search phrase. Try using *objectstorage search <searchPhrase>*",
 
 	"help.objectstorage.container.list": "Lists the Object Storage containers.",
 	"help.objectstorage.container.details": "Lists the objects inside of <container> object storage container.  <container> is optional.  If omitted, you can select a container from a list.",
 	"help.objectstorage.retrieve.object": "Retrieves <object> object found in the container <container>.  Both <container> and <object> are optional.  If omitted, you will be prompted to select them.",
+	"help.objectstorage.search": "Search Object Storage for <searchPhrase>.  Objects matching the <searchPhrase> will be returned to the adapter.",
 
 	"objectstorage.select.none.option": "None of the above",
 	"objectstorage.missing.envs": "Required environment variable is missing.  Please set %s as described in the README.",
@@ -21,6 +23,8 @@
 
 	"objectstorage.object.not.found": "No object named '%s' exists.",
 	"objectstorage.object.prompt.select": "Select an object from the list below.  Objects larger than 1 MB have been filtered.",
+
+	"objectstore.search.object": "The following files matched your search: ",
 
 	"objectstore.retrieve.object": "Sending object file '%s' to adapter.",
 	"objectstorage.retrieve.error": "Failed to retrieve object",
