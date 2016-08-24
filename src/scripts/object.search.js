@@ -90,7 +90,7 @@ module.exports = (robot, res) => {
 	// Fixed command match
 	const OBJECT_SEARCH_PATTERN = /objectstorage\ssearch\s?(.*)/i;
 	robot.respond(OBJECT_SEARCH_PATTERN, {
-		id: 'objectstorage.retrieve.object'
+		id: 'objectstorage.search.object'
 	}, (res) => {
 		robot.logger.debug(`${TAG}: res.message.text=${res.message.text}.`);
 		processObjectSearch(robot, res, res.match[1]);
