@@ -26,6 +26,7 @@ const path = require('path');
 const TAG = path.basename(__filename);
 const Conversation = require('hubot-conversation');
 const activity = require('hubot-ibmcloud-activity-emitter');
+const entities = require('../lib/objectstore.entities');
 
 const i18n = new (require('i18n-2'))({
 	locales: ['en'],
@@ -54,6 +55,9 @@ module.exports = (robot, res) => {
 		else {
 			storage = undefined;
 		}
+
+		// Register entity handling functions
+		entities.registerEntityFunctions(storage);
 	}
 
 	const switchBoard = new Conversation(robot);

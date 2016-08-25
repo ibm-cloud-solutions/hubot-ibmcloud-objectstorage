@@ -13,9 +13,6 @@ const TAG = path.basename(__filename);
 const _ = require('lodash');
 const utils = require('hubot-ibmcloud-utils').utils;
 
-const MAX_FILE_SIZE = (1024 * 1024);
-const SUPPORTED_ADAPTERS = ['slack', 'shell'];
-
 const i18n = new (require('i18n-2'))({
 	locales: ['en'],
 	extension: '.json',
@@ -32,11 +29,12 @@ function ParamHelper(options) {
 	this.robot = options.robot;
 	this.res = options.res;
 	this.logger = this.robot.logger;
+	this.settings = options.settings;
 	this.initSuccess = false;
 	this.storage = new ObjectStorage({
 		robot: this.robot,
 		res: this.res,
-		settings: options.settings
+		settings: this.settings
 	});
 	if (!this.storage.initializedSuccessfully()) {
 		this.missingEnv = this.storage.missingEnv;
@@ -57,7 +55,7 @@ ParamHelper.prototype.getMissingEnv = function() {
 };
 
 ParamHelper.prototype.isAdapterSupported = function(adapterName) {
-	return _.indexOf(SUPPORTED_ADAPTERS, adapterName) !== -1;
+	return _.indexOf(this.settings.supported_adapters, adapterName) !== -1;
 };
 
 ParamHelper.prototype.getObjectStorage = function() {
@@ -150,7 +148,7 @@ ParamHelper.prototype.obtainObjectName = function(context, containerName, origin
 	return this.storage.getContainerDetails(containerName)
 		.then((containerDetails) => {
 			let smallerObjects = _.filter(containerDetails.objects, (object) => {
-				return object.bytes <= MAX_FILE_SIZE;
+				return object.bytes <= this.settings.max_file_size;
 			});
 			const objectNames = _.map(smallerObjects, 'name');
 			if (originalInputName && originalInputName.length > 0) {

@@ -57,7 +57,7 @@
   "dependencies": {
     "hubot-conversation": "^1.1.1",
     "hubot-ibmcloud-activity-emitter": ">=0.0.3",
-    "hubot-ibmcloud-cognitive-lib": ">=0.0.26",
+    "hubot-ibmcloud-cognitive-lib": ">=0.0.37",
     "hubot-ibmcloud-logger": ">=0.0.19",
     "hubot-ibmcloud-utils": ">=0.0.8",
     "lodash": "^4.13.1",
