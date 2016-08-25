@@ -21,6 +21,8 @@ const settings = {
 	nlc_search_result_limit: parseInt(process.env.NLC_SEARCH_RESULT_LIMIT, 10) || 3,
 	nlc_classifier_cleanup_interval: parseInt(process.env.NLC_CLASSIFIER_CLEANUP_INTERVAL, 10) || 1000 *
 		60 * 60,
+	max_file_size: (1024 * 1024),
+	supported_adapters: ['slack', 'shell'],
 	nlc_version: 'v1'
 };
 

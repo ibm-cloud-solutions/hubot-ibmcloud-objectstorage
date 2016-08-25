@@ -51,7 +51,8 @@
 					"name": "objectname",
 					"title": "object name",
 					"type": "entity",
-					"prompt": "OK. What is the name of the object?"
+					"prompt": "OK. What is the name of the object?",
+					"entityfunction": "funcobjectnames"
 				}
 		  	]
 		},
