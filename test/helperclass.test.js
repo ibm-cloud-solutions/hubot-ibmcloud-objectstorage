@@ -15,6 +15,7 @@
 const env = require('../src/lib/env');
 const NLCHelper = require('../src/lib/nlcHelper');
 const ParamHelper = require('../src/lib/paramHelper');
+const ObjectStorage = require('../src/lib/objectstore');
 const Helper = require('hubot-test-helper');
 const helper = new Helper('../src/scripts');
 const nock = require('nock');
@@ -203,6 +204,108 @@ describe('Test test via Slack', function() {
 					done(err);
 				});
 		});
+
+		it('should fail during delete of old classifiers from NLC', function(done) {
+			room.robot.adapterName = 'slack';
+			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/').query({
+				format: 'json'
+			}).reply(200, [TEST_CONTAINER]);
+			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/' + TEST_CONTAINER.name).query({
+				format: 'json'
+			}).reply(200, [TEST_CONTAINER_OBJECTS]);
+			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[
+				0].title).query({
+					format: 'json'
+				}).reply(200, 'This is the text');
+
+			nock(env.nlc_url).get('/v1/classifiers').reply(200, {
+				classifiers: [{
+					"classifier_id": "good",
+					"url": "https://foo.com/v1/classifiers/good",
+					"name": "cloudbot-obj-storage-classifier",
+					"language": "en",
+					"created": "2016-08-22T15:08:28.176Z"
+				}, {
+					"classifier_id": "better",
+					"url": "https://foo.com/v1/classifiers/good",
+					"name": "cloudbot-obj-storage-classifier",
+					"language": "en",
+					"created": "2016-08-22T15:08:28.176Z"
+				}, {
+					"classifier_id": "best",
+					"url": "https://foo.com/v1/classifiers/good",
+					"name": "cloudbot-obj-storage-classifier",
+					"language": "en",
+					"created": "2016-08-22T15:08:28.176Z"
+				}]
+			});
+
+			nock(env.nlc_url).get('/v1/classifiers/good').reply(200, {
+				"classifier_id": "good",
+				"name": "cloudbot-obj-storage-classifier",
+				"language": "en",
+				"created": "2016-08-10T15:08:28.176Z",
+				"url": "https://foo.com/v1/classifiers/good",
+				"status": "Available",
+				"status_description": "The classifier instance is now available and is ready to take classifier requests."
+			});
+
+			nock(env.nlc_url).delete('/v1/classifiers/good').reply(403, {
+				"classifier_id": "good"
+			});
+
+			nock(env.nlc_url).get('/v1/classifiers/better').reply(200, {
+				"classifier_id": "better",
+				"name": "cloudbot-obj-storage-classifier",
+				"language": "en",
+				"created": "2016-08-22T15:08:28.176Z",
+				"url": "https://foo.com/v1/classifiers/better",
+				"status": "Training",
+				"status_description": "The classifier instance is now available and is ready to take classifier requests."
+			});
+
+			nock(env.nlc_url).get('/v1/classifiers/best').reply(200, {
+				"classifier_id": "best",
+				"name": "cloudbot-obj-storage-classifier",
+				"language": "en",
+				"created": "2016-08-22T15:08:28.176Z",
+				"url": "https://foo.com/v1/classifiers/best",
+				"status": "Available",
+				"status_description": "The classifier instance is now available and is ready to take classifier requests."
+			});
+
+			nock(env.nlc_url).post('/v1/classifiers/good/classify', {
+				"text": "ocean with birds"
+			}).reply(200, {
+				classifier_id: 'good',
+				url: 'https://foo.com/v1/classifiers/good',
+				text: 'ocean with birds',
+				top_class: '/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[0].title,
+				classes: [{
+					class_name: '/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[0].title,
+					confidence: 0.8865453325314453
+				}]
+			});
+
+			let nlcHelper = new NLCHelper({
+				robot: {
+					logger: {
+						debug: function() {},
+						info: function() {}
+
+					}
+				},
+				settings: env
+			});
+			nlcHelper.deleteOldClassifiers()
+				.then((result) => {
+					done(new Error('should have failed to delete.'));
+				})
+				.catch((err) => {
+					if (err)
+						done();
+				});
+		});
 	});
 
 	context('user calls `forgets to add envs for NLC`', function() {
@@ -362,5 +465,107 @@ describe('Test test via Slack', function() {
 			expect(paramHelper.getMissingEnv()).to.eql('HUBOT_OBJECT_STORAGE_PROJECT_ID');
 			done();
 		});
+
+		it('should fail to initialize ObjectStorage if missing os_project_id', function(done) {
+			let storage = new ObjectStorage({
+				robot: {
+					logger: {
+						debug: function() {},
+						info: function() {}
+
+					}
+				},
+				res: {},
+				settings: {
+					os_auth_url: 'http://ibm.com',
+					os_user_id: 'foo',
+					os_password: 'bar',
+					os_project_id: 'foobar'
+				}
+			});
+
+			expect(storage.initializedSuccessfully()).to.be.false;
+			expect(storage.getMissingEnv()).to.eql('HUBOT_OBJECT_STORAGE_BLUEMIX_REGION');
+			done();
+		});
+
+		it('should fail to getContainers if missing os_project_id', function(done) {
+			let storage = new ObjectStorage({
+				robot: {
+					logger: {
+						debug: function() {},
+						info: function() {}
+
+					}
+				},
+				res: {},
+				settings: {
+					os_auth_url: 'http://ibm.com',
+					os_user_id: 'foo',
+					os_password: 'bar',
+					os_project_id: 'foobar'
+				}
+			});
+
+			expect(storage.initializedSuccessfully()).to.be.false;
+			expect(storage.getMissingEnv()).to.eql('HUBOT_OBJECT_STORAGE_BLUEMIX_REGION');
+			storage.getContainers().catch((error) => {
+				if (error)
+					done();
+			});
+		});
+
+		it('should fail to getContainerDetails if missing os_project_id', function(done) {
+			let storage = new ObjectStorage({
+				robot: {
+					logger: {
+						debug: function() {},
+						info: function() {}
+
+					}
+				},
+				res: {},
+				settings: {
+					os_auth_url: 'http://ibm.com',
+					os_user_id: 'foo',
+					os_password: 'bar',
+					os_project_id: 'foobar'
+				}
+			});
+
+			expect(storage.initializedSuccessfully()).to.be.false;
+			expect(storage.getMissingEnv()).to.eql('HUBOT_OBJECT_STORAGE_BLUEMIX_REGION');
+			storage.getContainerDetails('name').catch((error) => {
+				if (error)
+					done();
+			});
+		});
+
+		it('should fail to getObject if missing os_project_id', function(done) {
+			let storage = new ObjectStorage({
+				robot: {
+					logger: {
+						debug: function() {},
+						info: function() {}
+
+					}
+				},
+				res: {},
+				settings: {
+					os_auth_url: 'http://ibm.com',
+					os_user_id: 'foo',
+					os_password: 'bar',
+					os_project_id: 'foobar'
+				}
+			});
+
+			expect(storage.initializedSuccessfully()).to.be.false;
+			expect(storage.getMissingEnv()).to.eql('HUBOT_OBJECT_STORAGE_BLUEMIX_REGION');
+			storage.getObject('name', 'name').catch((error) => {
+				if (error)
+					done();
+			});
+		});
 	});
+
 });

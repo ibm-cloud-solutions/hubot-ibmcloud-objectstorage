@@ -221,6 +221,9 @@ describe('Test test via Slack', function() {
 	context('user calls `objectstorage search`', function() {
 		beforeEach(function() {
 			room.robot.adapterName = 'slack';
+		});
+
+		it('should search and upload results to adapter', function(done) {
 			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/').query({
 				format: 'json'
 			}).reply(200, [TEST_CONTAINER]);
@@ -262,12 +265,250 @@ describe('Test test via Slack', function() {
 				}]
 			});
 
-			return room.user.say('mimiron', '@hubot objectstorage search ocean with birds');
+
+			room.user.say('mimiron', '@hubot objectstorage search ocean with birds')
+			.then(() => {
+				return waitForMessageQueue(room, 3).then(() => {
+					expect(room.messages[1]).to.eql(['hubot', '@mimiron ' + i18n.__('objectstore.search.object')]);
+					done();
+				});
+			});
 		});
 
-		it('should search for a file and upload to adapter', function() {
-			return waitForMessageQueue(room, 3).then(() => {
-				expect(room.messages[1]).to.eql(['hubot', '@mimiron ' + i18n.__('objectstore.search.object')]);
+		it('should search and upload results to adapter (2 available classifiers, 1 unauthorized)', function(done) {
+			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/').query({
+				format: 'json'
+			}).reply(200, [TEST_CONTAINER]);
+			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/' + TEST_CONTAINER.name).query({
+				format: 'json'
+			}).reply(200, [TEST_CONTAINER_OBJECTS]);
+			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[0].title).query({
+				format: 'json'
+			}).reply(200, 'This is the text');
+			nock(NLC_URL).get('/v1/classifiers').reply(200, {classifiers: [
+				{
+					"classifier_id": "good",
+					"url": "https://foo.com/v1/classifiers/good",
+					"name": "cloudbot-obj-storage-classifier",
+					"language": "en",
+					"created": "2016-08-22T15:08:28.176Z"
+				},
+				{
+					"classifier_id": "worse",
+					"url": "https://foo.com/v1/classifiers/good",
+					"name": "cloudbot-obj-storage-classifier",
+					"language": "en",
+					"created": "2016-08-20T15:08:28.176Z"
+				},
+				{
+					"classifier_id": "reallybad",
+					"url": "https://foo.com/v1/classifiers/good",
+					"name": "cloudbot-obj-storage-classifier",
+					"language": "en",
+					"created": "2016-08-20T15:08:28.176Z"
+				}
+			]});
+
+			nock(NLC_URL).get('/v1/classifiers/good').reply(200, {
+				"classifier_id": "good",
+				"name": "cloudbot-obj-storage-classifier",
+				"language": "en",
+				"created": "2016-08-22T15:08:28.176Z",
+				"url": "https://foo.com/v1/classifiers/good",
+				"status": "Available",
+				"status_description": "The classifier instance is now available and is ready to take classifier requests."
+			});
+
+			nock(NLC_URL).get('/v1/classifiers/worse').reply(200, {
+				"classifier_id": "good",
+				"name": "cloudbot-obj-storage-classifier",
+				"language": "en",
+				"created": "2016-08-20T15:08:28.176Z",
+				"url": "https://foo.com/v1/classifiers/good",
+				"status": "Available",
+				"status_description": "The classifier instance is now available and is ready to take classifier requests."
+			});
+
+			nock(NLC_URL).get('/v1/classifiers/worse').reply(403, {
+				"classifier_id": "good",
+				"name": "cloudbot-obj-storage-classifier",
+				"language": "en",
+				"created": "2016-08-20T15:08:28.176Z",
+				"url": "https://foo.com/v1/classifiers/good",
+				"status": "Available",
+				"status_description": "The classifier instance is now available and is ready to take classifier requests."
+			});
+
+			nock(NLC_URL).post('/v1/classifiers/good/classify', {"text": "ocean with birds"}).reply(200, {
+				classifier_id: 'good',
+				url: 'https://foo.com/v1/classifiers/good',
+				text: 'ocean with birds',
+				top_class: '/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[0].title,
+				classes: [{
+					class_name: '/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[0].title,
+					confidence: 0.8865453325314453
+				}]
+			});
+
+
+			room.user.say('mimiron', '@hubot objectstorage search ocean with birds')
+			.then(() => {
+				return waitForMessageQueue(room, 3).then(() => {
+					expect(room.messages[1]).to.eql(['hubot', '@mimiron ' + i18n.__('objectstore.search.object')]);
+					done();
+				});
+			});
+		});
+
+		it('should respond without results (no classifiers)', function(done) {
+			nock(NLC_URL).get('/v1/classifiers').reply(200, {classifiers: []});
+			nock(NLC_URL).post('/v1/classifiers/good/classify', {"text": "ocean with carts"}).reply(200, {});
+			room.user.say('mimiron', '@hubot objectstorage search ocean with cats')
+			.then(() => {
+				return waitForMessageQueue(room, 2).then(() => {
+					console.log(room.messages);
+					expect(room.messages[1]).to.eql(['hubot', '@mimiron ' + i18n.__('objectstore.search.object.no.results')]);
+					done();
+				});
+			}).catch((error) => {
+				done(error);
+			});
+		});
+
+		it('should respond without results (classifiers with different name)', function(done) {
+			nock(NLC_URL).get('/v1/classifiers').reply(200, {classifiers: [
+				{
+					"classifier_id": "good",
+					"url": "https://foo.com/v1/classifiers/good",
+					"name": "foobar",
+					"language": "en",
+					"created": "2016-08-22T15:08:28.176Z"
+				}
+			]});
+
+			nock(NLC_URL).get('/v1/classifiers/good').reply(200, {
+				"classifier_id": "good",
+				"name": "foobar",
+				"language": "en",
+				"created": "2016-08-22T15:08:28.176Z",
+				"url": "https://foo.com/v1/classifiers/good",
+				"status": "Available",
+				"status_description": "The classifier instance is now available and is ready to take classifier requests."
+			});
+			nock(NLC_URL).post('/v1/classifiers/good/classify', {"text": "ocean with waves"}).reply(200, {});
+			room.user.say('mimiron', '@hubot objectstorage search ocean with waves')
+			.then(() => {
+				return waitForMessageQueue(room, 2).then(() => {
+					console.log(room.messages);
+					expect(room.messages[1]).to.eql(['hubot', '@mimiron ' + i18n.__('objectstore.search.object.no.results')]);
+					done();
+				});
+			}).catch((error) => {
+				done(error);
+			});
+		});
+
+
+		it('should respond without results (classifiers with different name)', function(done) {
+			nock(NLC_URL).get('/v1/classifiers').reply(403, {});
+			room.user.say('mimiron', '@hubot objectstorage search ocean with waves')
+			.then(() => {
+				return waitForMessageQueue(room, 2).then(() => {
+					console.log(room.messages);
+					expect(room.messages[1]).to.eql(['hubot', '@mimiron ' + i18n.__('objectstore.search.object.no.results')]);
+					done();
+				});
+			}).catch((error) => {
+				done(error);
+			});
+		});
+
+		it('should respond without results (classifiers but all training)', function(done) {
+			nock(NLC_URL).get('/v1/classifiers').reply(200, {classifiers: [
+				{
+					"classifier_id": "good",
+					"url": "https://foo.com/v1/classifiers/good",
+					"name": "cloudbot-obj-storage-classifier",
+					"language": "en",
+					"created": "2016-08-22T15:08:28.176Z"
+				}
+			]});
+
+			nock(NLC_URL).get('/v1/classifiers/good').reply(200, {
+				"classifier_id": "good",
+				"name": "cloudbot-obj-storage-classifier",
+				"language": "en",
+				"created": "2016-08-22T15:08:28.176Z",
+				"url": "https://foo.com/v1/classifiers/good",
+				"status": "Available",
+				"status_description": "The classifier instance is now available and is ready to take classifier requests."
+			});
+			nock(NLC_URL).post('/v1/classifiers/good/classify', {"text": "ocean with waves"}).reply(200, {});
+			room.user.say('mimiron', '@hubot objectstorage search ocean with waves')
+			.then(() => {
+				return waitForMessageQueue(room, 2).then(() => {
+					console.log(room.messages);
+					expect(room.messages[1]).to.eql(['hubot', '@mimiron ' + i18n.__('objectstore.search.object.no.results')]);
+					done();
+				});
+			}).catch((error) => {
+				done(error);
+			});
+		});
+
+		it('should respond without results (classifiers missing object storage file)', function(done) {
+			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/').query({
+				format: 'json'
+			}).reply(200, [TEST_CONTAINER]);
+			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/' + TEST_CONTAINER.name).query({
+				format: 'json'
+			}).reply(200, [TEST_CONTAINER_OBJECTS]);
+			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[0].title).query({
+				format: 'json'
+			}).reply(404);
+			nock(NLC_URL).get('/v1/classifiers').reply(200, {classifiers: [
+				{
+					"classifier_id": "good",
+					"url": "https://foo.com/v1/classifiers/good",
+					"name": "cloudbot-obj-storage-classifier",
+					"language": "en",
+					"created": "2016-08-22T15:08:28.176Z"
+				}
+			]});
+
+			nock(NLC_URL).get('/v1/classifiers/good').reply(200, {
+				"classifier_id": "good",
+				"name": "cloudbot-obj-storage-classifier",
+				"language": "en",
+				"created": "2016-08-22T15:08:28.176Z",
+				"url": "https://foo.com/v1/classifiers/good",
+				"status": "Available",
+				"status_description": "The classifier instance is now available and is ready to take classifier requests."
+			});
+
+
+			nock(NLC_URL).post('/v1/classifiers/good/classify', {"text": "ocean with water"}).reply(200, {
+				classifier_id: 'good',
+				url: 'https://foo.com/v1/classifiers/good',
+				text: 'ocean with birds',
+				top_class: '/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[0].title,
+				classes: [{
+					class_name: '/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[0].title,
+					confidence: 0.8865453325314453
+				}]
+			});
+
+
+			room.user.say('mimiron', '@hubot objectstorage search ocean with water')
+			.then(() => {
+				return waitForMessageQueue(room, 2).then(() => {
+					expect(room.messages[1]).to.eql(['hubot', '@mimiron ' + i18n.__('objectstore.search.object')]);
+					done(new Error('Should not find a file'));
+				});
+			})
+			.catch((error) => {
+				if (error)
+					done();
 			});
 		});
 	});
