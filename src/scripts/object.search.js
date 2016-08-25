@@ -120,7 +120,9 @@ module.exports = (robot, res) => {
 				let matches = [];
 				if (classifierResult.classes) {
 					let count = 0;
+					context.robot.logger.debug(`${TAG}: Classify results for searchPhrase ${searchPhrase}`);
 					_.forEach(classifierResult.classes, (classifier) => {
+						context.robot.logger.debug(`${TAG}:  classify results:  ` + JSON.stringify(classifier));
 						let path = classifier.class_name.split('/');
 						if (classifier.confidence >= env.nlc_search_confidence_min) {
 							matches.push({
@@ -173,27 +175,40 @@ module.exports = (robot, res) => {
 					robot.logger.debug(
 						`${TAG}: Downloading ${objectDetails.containerName} container and ${objectDetails.objectName} object for search command.`
 					);
-					downloadPromises.push(storage.getObject(objectDetails.containerName, objectDetails.objectName));
+					downloadPromises.push(storage.getObject(objectDetails.containerName, objectDetails.objectName).catch((err) => {
+						robot.logger.error(`${TAG}: Object storage did not contain an object named '${objectDetails.objectName}' in the container '${objectDetails.containerName}'.  Error: `, err);
+					}));
 				});
 				return Promise.all(downloadPromises);
 			})
-			.then((downloadedObjects) => {
-				let message = i18n.__('objectstore.search.object');
-				robot.emit('ibmcloud.formatter', {
-					response: res,
-					message: message
+			.then((allDownloadedObjects) => {
+				let downloadedObjects = _.filter(allDownloadedObjects, (downloadedObject) => {
+					return downloadedObject && _.isObject(downloadedObject);
 				});
-				_.forEach(downloadedObjects, (downloadedObject) => {
-					robot.logger.debug(`${TAG}: Temp file created for ${downloadedObject.name} at ${downloadedObject.path}`);
+
+				if (downloadedObjects.length > 0) {
 					robot.emit('ibmcloud.formatter', {
 						response: res,
-						fileName: downloadedObject.name,
-						filePath: downloadedObject.path
+						message: i18n.__('objectstore.search.object')
 					});
-					activity.emitBotActivity(robot, res, {
-						activity_id: 'activity.objectstorage.retrieve.object'
+					_.forEach(downloadedObjects, (downloadedObject) => {
+						robot.logger.debug(`${TAG}: Temp file created for ${downloadedObject.name} at ${downloadedObject.path}`);
+						robot.emit('ibmcloud.formatter', {
+							response: res,
+							fileName: downloadedObject.name,
+							filePath: downloadedObject.path
+						});
+						activity.emitBotActivity(robot, res, {
+							activity_id: 'activity.objectstorage.retrieve.object'
+						});
 					});
-				});
+				}
+				else {
+					robot.emit('ibmcloud.formatter', {
+						response: res,
+						message: i18n.__('objectstore.search.object.no.results')
+					});
+				}
 			})
 			.catch((error) => {
 				robot.logger.error(

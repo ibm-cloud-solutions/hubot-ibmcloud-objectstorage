@@ -25,6 +25,7 @@
 	"objectstorage.object.prompt.select": "Select an object from the list below.  Objects larger than 1 MB have been filtered.",
 
 	"objectstore.search.object": "The following files matched your search: ",
+	"objectstore.search.object.no.results": "Nothing matched your search",
 
 	"objectstore.retrieve.object": "Sending object file '%s' to adapter.",
 	"objectstorage.retrieve.error": "Failed to retrieve object",
