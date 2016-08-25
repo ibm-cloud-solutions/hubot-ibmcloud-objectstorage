@@ -310,4 +310,41 @@ describe('Interacting with Bluemix services via Slack / Natural Language', funct
 		});
 	});
 
+	context('verify entity functions', function() {
+		let storage;
+
+		beforeEach(function() {
+			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/').query({
+				format: 'json'
+			}).reply(200, [TEST_CONTAINER]);
+
+			const ParamHelper = require('../src/lib/paramHelper');
+			const env = require('../src/lib/env');
+			var res = { message: {text: '', user: {id: 'mimiron'}}, response: room };
+			let paramHelper = new ParamHelper({
+				robot: room.robot,
+				res: res,
+				settings: env
+			});
+			if (paramHelper.initializedSuccessfully()) {
+				storage = paramHelper.getObjectStorage();
+			}
+			else {
+				storage = undefined;
+			}
+		});
+
+		it('should retrieve set of container names', function(done) {
+			const entities = require('../src/lib/objectstore.entities');
+			var res = { message: {text: '', user: {id: 'mimiron'}}, response: room };
+			entities.registerEntityFunctions(storage);
+			entities.getContainerNames(room.robot, res, 'containername', {}).then(function(containerNames) {
+				expect(containerNames.length).to.eql(1);
+				done();
+			}).catch(function(error) {
+				done(error);
+			});
+		});
+	});
+
 });

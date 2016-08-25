@@ -13,8 +13,10 @@
 			"parameters" : [
 				{
 					"name": "containername",
+					"title": "container name",
 					"type": "entity",
-					"prompt": "OK. What is the name of the container?"
+					"prompt": "OK. What is the name of the container?",
+					"entityfunction": "funccontainername"
 				}
 			]
 		},
@@ -40,11 +42,14 @@
 			"parameters" : [
 				{
 					"name": "containername",
+					"title": "container name",
 					"type": "entity",
-					"prompt": "OK. What is the name of the container?"
+					"prompt": "OK. What is the name of the container?",
+					"entityfunction": "funccontainername"
 				},
 				{
 					"name": "objectname",
+					"title": "object name",
 					"type": "entity",
 					"prompt": "OK. What is the name of the object?"
 				}
@@ -63,6 +68,7 @@
 			"parameters" : [
 				{
 					"name": "searchphrase",
+					"title": "search phrase",
 					"type": "entity",
 					"prompt": "OK. What is the search phrase?"
 				}
