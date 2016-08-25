@@ -1,9 +1,9 @@
 {
   "name": "hubot-ibmcloud-objectstorage",
-  "version": "0.0.15",
+  "version": "0.1.0",
   "description": "A Hubot script for managing Object Storage containers",
   "main": "index.js",
-  "respository": {
+  "repository": {
     "url": "https://github.com/ibm-cloud-solutions/hubot-ibmcloud-objectstorage",
     "type": "git"
   },
