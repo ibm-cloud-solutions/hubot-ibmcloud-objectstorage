@@ -137,6 +137,10 @@ module.exports = (robot, res) => {
 				}
 				context.robot.logger.debug(`${TAG}: Found the following classifier matches: ` + JSON.stringify(matches));
 				return matches;
+			})
+			.catch((error) => {
+				context.robot.logger.error(`${TAG}: No classifiers are available at this time.`, error);
+				return [];
 			});
 	}
 
@@ -176,7 +180,9 @@ module.exports = (robot, res) => {
 						`${TAG}: Downloading ${objectDetails.containerName} container and ${objectDetails.objectName} object for search command.`
 					);
 					downloadPromises.push(storage.getObject(objectDetails.containerName, objectDetails.objectName).catch((err) => {
-						robot.logger.error(`${TAG}: Object storage did not contain an object named '${objectDetails.objectName}' in the container '${objectDetails.containerName}'.  Error: `, err);
+						robot.logger.error(
+							`${TAG}: Object storage did not contain an object named '${objectDetails.objectName}' in the container '${objectDetails.containerName}'.  Error: `,
+							err);
 					}));
 				});
 				return Promise.all(downloadPromises);
