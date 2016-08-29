@@ -187,6 +187,7 @@ ObjectStore.prototype.getContainers = function() {
 						}
 					}
 					catch (parseError) {
+						os.logger.error(`${TAG}: Response body that could not be parsed: ` + res.body);
 						os.logger.error(`${TAG}: Unable to list containers`, parseError);
 						reject(parseError);
 					}
