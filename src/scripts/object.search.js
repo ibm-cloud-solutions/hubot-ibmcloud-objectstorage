@@ -127,7 +127,8 @@ module.exports = (robot, res) => {
 						if (classifier.confidence >= env.nlc_search_confidence_min) {
 							matches.push({
 								containerName: path[1],
-								objectName: path[2]
+								objectName: path[2],
+								confidence: classifier.confidence
 							});
 							count++;
 							if (count >= env.nlc_search_result_limit)
@@ -175,6 +176,7 @@ module.exports = (robot, res) => {
 		searchForObject(context, nlcHelper, searchPhrase)
 			.then((objectList) => {
 				let downloadPromises = [];
+				downloadPromises.push(Promise.resolve(objectList));
 				_.forEach(objectList, (objectDetails) => {
 					robot.logger.debug(
 						`${TAG}: Downloading ${objectDetails.containerName} container and ${objectDetails.objectName} object for search command.`
@@ -188,6 +190,11 @@ module.exports = (robot, res) => {
 				return Promise.all(downloadPromises);
 			})
 			.then((allDownloadedObjects) => {
+				let objectList = allDownloadedObjects.shift();
+				let confidenceMap = {};
+				_.forEach(objectList, (objectDetails) => {
+					confidenceMap[objectDetails.objectName] = Math.round(objectDetails.confidence * 10000) / 100;
+				});
 				let downloadedObjects = _.filter(allDownloadedObjects, (downloadedObject) => {
 					return downloadedObject && _.isObject(downloadedObject);
 				});
@@ -197,16 +204,19 @@ module.exports = (robot, res) => {
 						response: res,
 						message: i18n.__('objectstore.search.object')
 					});
+					let i = 1;
 					_.forEach(downloadedObjects, (downloadedObject) => {
 						robot.logger.debug(`${TAG}: Temp file created for ${downloadedObject.name} at ${downloadedObject.path}`);
 						robot.emit('ibmcloud.formatter', {
 							response: res,
 							fileName: downloadedObject.name,
-							filePath: downloadedObject.path
+							filePath: downloadedObject.path,
+							message: `(${i}) ${downloadedObject.name} matches with a confidence of ${confidenceMap[downloadedObject.name]}%`
 						});
-						activity.emitBotActivity(robot, res, {
-							activity_id: 'activity.objectstorage.retrieve.object'
-						});
+						i++;
+					});
+					activity.emitBotActivity(robot, res, {
+						activity_id: 'objectstorage.search.object'
 					});
 				}
 				else {
