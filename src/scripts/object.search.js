@@ -124,16 +124,14 @@ module.exports = (robot, res) => {
 					_.forEach(classifierResult.classes, (classifier) => {
 						context.robot.logger.debug(`${TAG}:  classify results:  ` + JSON.stringify(classifier));
 						let path = classifier.class_name.split('/');
-						if (classifier.confidence >= env.nlc_search_confidence_min) {
-							matches.push({
-								containerName: path[1],
-								objectName: path[2],
-								confidence: classifier.confidence
-							});
-							count++;
-							if (count >= env.nlc_search_result_limit)
-								return false;
-						}
+						matches.push({
+							containerName: path[1],
+							objectName: path[2],
+							confidence: classifier.confidence
+						});
+						count++;
+						if (count >= env.nlc_search_result_limit)
+							return false;
 					});
 				}
 				context.robot.logger.debug(`${TAG}: Found the following classifier matches: ` + JSON.stringify(matches));
