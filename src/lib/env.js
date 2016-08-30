@@ -17,7 +17,7 @@ const settings = {
 	nlc_password: process.env.VCAP_SERVICES_NATURAL_LANGUAGE_CLASSIFIER_0_CREDENTIALS_PASSWORD || process.env.HUBOT_WATSON_NLC_PASSWORD,
 	nlc_objectstorage_classifier: process.env.HUBOT_OBJECT_STORAGE_SEARCH_CLASSIFIER_NAME ||
 		'cloudbot-obj-storage-classifier',
-	nlc_search_confidence_min: parseFloat(process.env.HUBOT_OBJECT_STORAGE_SEARCH_CONFIDENCE_MIN) || 0.25,
+	nlc_search_confidence_min: parseFloat(process.env.HUBOT_OBJECT_STORAGE_SEARCH_CONFIDENCE_MIN) || 0.0,
 	nlc_search_result_limit: parseInt(process.env.HUBOT_OBJECT_STORAGE_SEARCH_RESULT_LIMIT, 10) || 3,
 	nlc_classifier_cleanup_interval: parseInt(process.env.HUBOT_OBJECT_STORAGE_CLASSIFIER_CLEANUP_INTERVAL, 10) || 1000 *
 		60 * 60,
