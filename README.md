@@ -38,7 +38,20 @@ export HUBOT_WATSON_NLC_USERNAME=<NLC_USERNAME>
 export HUBOT_WATSON_NLC_PASSWORD=<NLC_PASSWORD>
 ```
 
-6. Start up your bot & off to the races!
+6. The search feature also has a few additional variables that can be set.  Each has a default value if unset.
+    - `HUBOT_OBJECT_STORAGE_SEARCH_CLASSIFIER_NAME` - determines what classifier name is used.  
+    - `HUBOT_OBJECT_STORAGE_SEARCH_CONFIDENCE_MIN` - determines the minimum confidence level for a Watson classify call.  The number should be a float less than 1 and greater than 0.  Default value is `0.25`.  Classify results that are less than this threshold will be filtered out of the results.
+    - `HUBOT_OBJECT_STORAGE_SEARCH_RESULT_LIMIT` - limits the number of results returned from search.  Currently it defaults to 3 results.  
+    - `HUBOT_OBJECT_STORAGE_CLASSIFIER_CLEANUP_INTERVAL` - determines how frequently old classifiers are automatically cleaned up.
+
+```
+export HUBOT_OBJECT_STORAGE_SEARCH_CLASSIFIER_NAME=<classiferName>
+export HUBOT_OBJECT_STORAGE_SEARCH_CONFIDENCE_MIN=<confidenceLevel>
+export HUBOT_OBJECT_STORAGE_SEARCH_RESULT_LIMIT=<searchResultLimit>
+export HUBOT_OBJECT_STORAGE_CLASSIFIER_CLEANUP_INTERVAL=<cleanupInterval>
+```
+
+7. Start up your bot & off to the races!
 
 ## Commands
 - `hubot objectstorage help` - Show available commands in the ibmcloud objectstorage category.
