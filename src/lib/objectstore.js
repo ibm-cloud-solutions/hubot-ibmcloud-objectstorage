@@ -25,6 +25,17 @@ const i18n = new (require('i18n-2'))({
 // At some point we need to toggle this setting based on some user input.
 i18n.setLocale('en');
 
+
+function setClearTokenInterval(objectstorage) {
+	setInterval(() => {
+		if (objectstorage.token) {
+			objectstorage.logger.debug(`${TAG}: Invalidating auth token.`);
+			objectstorage.token = undefined;
+		}
+	}, 1000 * 60 * 60 * 6); // invalidate token every 6 hours
+}
+
+
 function ObjectStore(options) {
 	this.robot = options.robot;
 	this.res = options.res;
@@ -57,6 +68,8 @@ function ObjectStore(options) {
 	this.userId = options.settings.os_user_id;
 	this.password = options.settings.os_password;
 	this.region = options.settings.os_bluemix_region;
+
+	setClearTokenInterval(this);
 
 	return this;
 }
