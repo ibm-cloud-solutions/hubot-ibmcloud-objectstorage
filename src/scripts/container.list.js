@@ -126,7 +126,7 @@ module.exports = (robot, res) => {
 					});
 
 					// Add the list of container names to the global cache for Natural Lang.
-					var containerNames = containers.map(function(container){
+					let containerNames = containers.map(function(container){
 						return container.name;
 					});
 					nlcconfig.updateGlobalParameterValues('IBMcloudObjectStorage_containername', containerNames);

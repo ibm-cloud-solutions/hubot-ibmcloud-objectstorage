@@ -83,7 +83,7 @@ ObjectStore.prototype.getMissingEnv = function() {
 };
 
 ObjectStore.prototype.checkAuth = function() {
-	var os = this;
+	let os = this;
 	if (!os.initializedSuccessfully()) {
 		return Promise.reject(i18n.__('objectstorage.missing.envs', this.missingEnv));
 	}
@@ -93,7 +93,7 @@ ObjectStore.prototype.checkAuth = function() {
 	}
 	else {
 		return new Promise((resolve, reject) => {
-			var d = {
+			let d = {
 				auth: {
 					identity: {
 						methods: [
@@ -114,7 +114,7 @@ ObjectStore.prototype.checkAuth = function() {
 				}
 			};
 
-			var url = os.authUrl + '/v3/auth/tokens';
+			let url = os.authUrl + '/v3/auth/tokens';
 			os.logger.debug(`${TAG}: Requesting OAUTH token for objectstore.  POST: ${url}`);
 			request.post({
 				url: url,
@@ -127,17 +127,17 @@ ObjectStore.prototype.checkAuth = function() {
 				else {
 					os.logger.debug(`${TAG}: Successfully obtained token`);
 
-					var body = res.body;
+					let body = res.body;
 					if (res.headers['x-subject-token'] && body.token && body.token.catalog) {
 						os.token = res.headers['x-subject-token'];
 						// find object-storage
-						var cat = body.token.catalog;
-						var publicUrl;
-						for (var i = 0; i < cat.length; i++) {
-							var c = cat[i];
+						let cat = body.token.catalog;
+						let publicUrl;
+						for (let i = 0; i < cat.length; i++) {
+							let c = cat[i];
 							if (c.type === 'object-store' && c.endpoints) {
-								for (var j = 0; j < c.endpoints.length; j++) {
-									var e = c.endpoints[j];
+								for (let j = 0; j < c.endpoints.length; j++) {
+									let e = c.endpoints[j];
 									if ((e.region === os.region) && (e.interface === 'public')) {
 										publicUrl = e.url;
 										break;
