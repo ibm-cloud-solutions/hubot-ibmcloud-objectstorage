@@ -36,7 +36,7 @@ function install() {
   
   echo "Create action with configuration parameters..."
   wsk action create -t 300000\
-    -p logLevel INFO\
+    -p logLevel DEBUG\
     -p cloudantUsername $cloudantUsername\
     -p cloudantPassword $cloudantPassword\
     -p cloudantDbName $cloudantDbName\
