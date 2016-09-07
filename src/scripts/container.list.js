@@ -106,7 +106,7 @@ module.exports = (robot, res) => {
 
 				if (attachments.length === 0) {
 					robot.logger.debug(`${TAG}: No object storage containers to list.`);
-					let message = i18n.__('objectstore.list.containers.none');
+					let message = i18n.__('objectstorage.list.containers.none');
 					robot.emit('ibmcloud.formatter', {
 						response: res,
 						message: message
