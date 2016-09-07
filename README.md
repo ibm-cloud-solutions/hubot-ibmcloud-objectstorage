@@ -22,7 +22,7 @@ Steps for adding this to your existing hubot:
 
 1. `cd` into your hubot directory
 2. Install the Swift Object Storage functionality with `npm install hubot-ibmcloud-objectstorage --save`
-3. Add `hubot-ibmcloud-translate` to your `external-scripts.json`
+3. Add `hubot-ibmcloud-objectstorage` to your `external-scripts.json`
 4. Add the necessary environment variables for Object Storage
 ```
 export HUBOT_OBJECT_STORAGE_AUTH_URL=<URL>
