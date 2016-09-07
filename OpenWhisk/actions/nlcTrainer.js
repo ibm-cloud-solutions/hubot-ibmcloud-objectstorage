@@ -28,22 +28,22 @@ function main(params) {
 	const watson = require('watson-developer-cloud');
 	const Cloudant = require('cloudant');
 
-	var log4js = require('log4js');
+	const log4js = require('log4js');
 	log4js.configure({
 		appenders: [
 			{ type: 'console' }
 		]
 	});
-	var logger = log4js.getLogger();
+	const logger = log4js.getLogger();
 	logger.setLevel(params.logLevel || 'INFO');
 
 	const TAG = 'nlcTrainer';
 	const classifierName = params.nlcClassifier || 'cloudbot-obj-storage-classifier';
 
-	var trainingFrequency = 60 * 60 * 1000; // default for 1 hour minimum between training
-	var nlc;
-	var cloudantDb;
-	var resultSummary = {};
+	let trainingFrequency = 60 * 60 * 1000; // default for 1 hour minimum between training
+	let nlc;
+	let cloudantDb;
+	let resultSummary = {};
 
 	// This promise is the returned to OpenWhisk and implements the main flow.
 	return new Promise((resolve, reject) => {
@@ -57,7 +57,7 @@ function main(params) {
 
 			cloudantDb = Cloudant({ account: params.cloudantUsername, password: params.cloudantPassword}).db.use(params.cloudantDbName);
 
-			var existingClassifiers = [];
+			let existingClassifiers = [];
 
 			getExistingClassifiers().then((classifiers) => {
 				existingClassifiers = classifiers;
@@ -88,10 +88,10 @@ function main(params) {
 			'nlcUsername', 'nlcPassword', 'nlcUrl'
 		];
 
-		var allValid = true;
+		let allValid = true;
 
 		// Print params for debugging
-		for (var element in params) {
+		for (let element in params) {
 			logger.debug(`${TAG}: param key: ${element} value: ${JSON.stringify(params[element])}`);
 		}
 
@@ -129,7 +129,7 @@ function main(params) {
 					reject(err);
 				}
 				else {
-					var classifiers = response.classifiers.sort((a, b) => {
+					let classifiers = response.classifiers.sort((a, b) => {
 						return new Date(b.created) - new Date(a.created);
 					});
 
@@ -141,7 +141,7 @@ function main(params) {
 						resolve(classifiers);
 					}
 					else {
-						var promises = [];
+						let promises = [];
 
 						classifiers.forEach((classifier) => {
 							promises.push(setClassifierInfo(classifier));
@@ -167,7 +167,7 @@ function main(params) {
 	// Decides if we should train.  Decision is based on the fact that we haven't created a new classifier in a while
 	// and no other classifier is currently training.
 	function shouldTrain(existingClassifiers) {
-		var shouldTrain = false;
+		let shouldTrain = false;
 
 		if (params.nlcForceTraining === 'true') {
 			logger.info(`${TAG}: should train, because force training flag is set.`);
@@ -186,14 +186,14 @@ function main(params) {
 				shouldTrain = true;
 			}
 			else {
-				var mostRecent = existingClassifiers[0];
-				var timeDiff = new Date() - new Date(mostRecent.created);
+				let mostRecent = existingClassifiers[0];
+				let timeDiff = new Date() - new Date(mostRecent.created);
 
 				if (timeDiff < trainingFrequency) {
 					logger.info(`${TAG}: should not train, because training frequency was not exceeded.  Last trained: ${mostRecent.created}`);
 				}
 				else {
-					var alreadyTraining = false;
+					let alreadyTraining = false;
 					existingClassifiers.forEach((classifier) => {
 						if (classifier.status === 'Training') {
 							alreadyTraining = true;
@@ -218,7 +218,7 @@ function main(params) {
 	// Adds training data to the provided array using the provided URL segments to generate the class.
 	// Format supported by nlc train: '[{ text: "my-text", classes:["my-class1", "my-class2",...]}, {}, ...]'
 	function addTrainingData(docId, array, url_segments, training_text) {
-		var NLC_LIMIT_TEXT_LENGTH = params.NLC_LIMIT_TEXT_LENGTH || 1024;
+		let NLC_LIMIT_TEXT_LENGTH = params.NLC_LIMIT_TEXT_LENGTH || 1024;
 
 		if (!training_text || !training_text.length) {
 			logger.warn(`${TAG}: WARNING - omitting empty training text.  Cloudant doc id: ${docId}`);
@@ -229,8 +229,8 @@ function main(params) {
 			return;
 		}
 
-		var nlcClass = '/' + url_segments.slice(-2).join('/'); // take last 2 segments for BluePic generated URL.
-		var trainingStatement = {
+		let nlcClass = '/' + url_segments.slice(-2).join('/'); // take last 2 segments for BluePic generated URL.
+		let trainingStatement = {
 			text: training_text,
 			classes: [nlcClass]
 		};
@@ -245,14 +245,14 @@ function main(params) {
 		return new Promise((resolve, reject) => {
 			logger.info(`${TAG}: retrieving metadata from cloudant to generate training data...`);
 
-			var trainingData = [];
+			let trainingData = [];
 
 			// NLC has several limits regarding training data.  see: https://www.ibm.com/watson/developercloud/doc/nl-classifier/data_format.shtml
-			var NLC_LIMIT_NUM_CLASSES = params.NLC_LIMIT_NUM_CLASSES || 500;
-			var NLC_LIMIT_MIN_RECORDS = params.NLC_LIMIT_MIN_RECORDS || 5;
-			var NLC_LIMIT_MAX_RECORDS = params.NLC_LIMIT_MAX_RECORDS || 15000;
+			let NLC_LIMIT_NUM_CLASSES = params.NLC_LIMIT_NUM_CLASSES || 500;
+			let NLC_LIMIT_MIN_RECORDS = params.NLC_LIMIT_MIN_RECORDS || 5;
+			let NLC_LIMIT_MAX_RECORDS = params.NLC_LIMIT_MAX_RECORDS || 15000;
 
-			var options = {
+			let options = {
 				limit: NLC_LIMIT_NUM_CLASSES * 2,  // times 2 because the view includes the image and user docs.
 				include_docs: true
 			};
@@ -267,7 +267,7 @@ function main(params) {
 						logger.warn(`${TAG}: WARNING - cloudant contains more image than supported for NLC training.  NLC will not be trained for all images.`);
 					}
 
-					var imageDocs = body.rows.filter((element) => {
+					let imageDocs = body.rows.filter((element) => {
 						return element.doc && element.doc.type === 'image' && element.doc.tags && element.doc.tags.length;
 					});
 
@@ -285,7 +285,7 @@ function main(params) {
 					}
 
 					imageDocs.forEach(function(doc) {
-						var url_segments;
+						let url_segments;
 
 						if (doc.url) {
 							url_segments = doc.url.split('/');
@@ -331,7 +331,7 @@ function main(params) {
 			getTrainingData().then((trainingData) => {
 				logger.info(`${TAG}: training new classifier - ${classifierName} with ${trainingData.length} training records...`);
 
-				var options = {
+				let options = {
 					language: 'en',
 					name: classifierName,
 					training_data: trainingData
@@ -373,12 +373,12 @@ function main(params) {
 	// With this logic in place, at most only 2 classifiers will exist.
 	function cleanupOldClassifiers(existingClassifiers) {
 		return new Promise((resolve, reject) => {
-			var oldClassifiers = [];
-			var mostRecentTraining;
-			var mostRecentAvailable;
+			let oldClassifiers = [];
+			let mostRecentTraining;
+			let mostRecentAvailable;
 
-			for (var i = 0; i < existingClassifiers.length; ++i) {
-				var classifier = existingClassifiers[i];
+			for (let i = 0; i < existingClassifiers.length; ++i) {
+				let classifier = existingClassifiers[i];
 				if (!mostRecentTraining && classifier.status === 'Training') {
 					mostRecentTraining = classifier;
 				}
@@ -398,7 +398,7 @@ function main(params) {
 			else {
 				logger.info(`${TAG}: found ${oldClassifiers.length} to cleanup.`);
 
-				var promises = [];
+				let promises = [];
 
 				oldClassifiers.forEach((classifier) => {
 					promises.push(deleteClassifier(classifier));
@@ -429,4 +429,3 @@ if (process.env.HUBOT_AUTOMATED_TEST === 'true') {
 		main: main
 	};
 }
-

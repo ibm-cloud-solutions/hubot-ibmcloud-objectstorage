@@ -14,7 +14,7 @@ const NAMESPACE = 'IBMcloudObjectStorage';
 const PARAM_CONTAINERNAME = 'containername';
 const PARAM_OBJECTNAMES = 'objectnames';
 
-var functionsRegistered = false;
+let functionsRegistered = false;
 let storage;
 
 
@@ -38,7 +38,7 @@ function getContainerNames(robot, res, parameterName, parameters) {
 	return new Promise(function(resolve, reject) {
 		if (storage) {
 			storage.getContainers().then((result) => {
-				var containerNames = result.map(function(container){
+				let containerNames = result.map(function(container){
 					return container.name;
 				});
 				nlcconfig.updateGlobalParameterValues(buildGlobalName(PARAM_CONTAINERNAME), containerNames);

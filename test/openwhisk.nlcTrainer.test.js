@@ -21,7 +21,7 @@ const cloudantViewResponse = require(path.resolve(__dirname, 'resources', 'cloud
 
 describe('Testing OpenWhisk action to train NLC using BluePic Cloudant metadata.', function() {
 
-	var params;
+	let params;
 
 	before(function() {
 		nock.disableNetConnect();
@@ -51,7 +51,7 @@ describe('Testing OpenWhisk action to train NLC using BluePic Cloudant metadata.
 	}
 
 	function getClassifierDetailEntry(classifierListEntry, classifierStatus) {
-		var classifierDetailEntry = JSON.parse(JSON.stringify(classifierListEntry));
+		let classifierDetailEntry = JSON.parse(JSON.stringify(classifierListEntry));
 		classifierDetailEntry.status = classifierStatus;
 		return classifierDetailEntry;
 	}
@@ -87,7 +87,7 @@ describe('Testing OpenWhisk action to train NLC using BluePic Cloudant metadata.
 			let classifier1 = getClassifierListEntry('classifier-id-1', new Date(111));
 
 			nock(nlcEndpoint).get('/v1/classifiers').reply(200, function() {
-				var response = {
+				let response = {
 					classifiers: []
 				};
 
@@ -112,7 +112,7 @@ describe('Testing OpenWhisk action to train NLC using BluePic Cloudant metadata.
 			let classifier1 = getClassifierListEntry('classifier-id-1', new Date());
 
 			nock(nlcEndpoint).get('/v1/classifiers').reply(200, function() {
-				var response = {
+				let response = {
 					classifiers: []
 				};
 
@@ -140,7 +140,7 @@ describe('Testing OpenWhisk action to train NLC using BluePic Cloudant metadata.
 			params.tags = [{ tag1: 'fake' }];
 
 			nock(nlcEndpoint).get('/v1/classifiers').reply(200, function() {
-				var response = {
+				let response = {
 					classifiers: []
 				};
 				return response;
@@ -162,7 +162,7 @@ describe('Testing OpenWhisk action to train NLC using BluePic Cloudant metadata.
 			// params.tags = [{tag1:'fake'}];
 
 			nock(nlcEndpoint).get('/v1/classifiers').reply(200, function() {
-				var response = {
+				let response = {
 					classifiers: []
 				};
 				return response;
@@ -193,7 +193,7 @@ describe('Testing OpenWhisk action to train NLC using BluePic Cloudant metadata.
 			});
 
 			nock(nlcEndpoint).get('/v1/classifiers').reply(200, function() {
-				var response = {
+				let response = {
 					classifiers: []
 				};
 
@@ -255,7 +255,7 @@ describe('Testing OpenWhisk action to train NLC using BluePic Cloudant metadata.
 			});
 
 			nock(nlcEndpoint).get('/v1/classifiers').reply(200, function() {
-				var response = {
+				let response = {
 					classifiers: []
 				};
 
@@ -294,7 +294,7 @@ describe('Testing OpenWhisk action to train NLC using BluePic Cloudant metadata.
 			let classifier4 = getClassifierListEntry('classifier-id-4', new Date(4444444444));
 
 			nock(nlcEndpoint).get('/v1/classifiers').reply(200, function() {
-				var response = {
+				let response = {
 					classifiers: []
 				};
 
@@ -321,8 +321,8 @@ describe('Testing OpenWhisk action to train NLC using BluePic Cloudant metadata.
 			});
 
 			// delete routes for the 2 we expect to be deleted.
-			var deletedClassifier1 = false;
-			var deletedClassifier2 = false;
+			let deletedClassifier1 = false;
+			let deletedClassifier2 = false;
 
 			nock(nlcEndpoint).delete(stripNlcEndpoint(classifier1.url)).reply(200, function() {
 				deletedClassifier1 = true;

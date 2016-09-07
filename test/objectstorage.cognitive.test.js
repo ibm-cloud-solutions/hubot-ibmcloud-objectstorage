@@ -12,7 +12,7 @@ const helper = new Helper('../src/scripts');
 const expect = require('chai').expect;
 const nock = require('nock');
 
-var i18n = new (require('i18n-2'))({
+const i18n = new (require('i18n-2'))({
 	locales: ['en'],
 	extension: '.json',
 	// Add more languages to the list of locales when the files are created.
@@ -120,7 +120,7 @@ describe('Interacting with Bluemix services via Slack / Natural Language', funct
 				}
 			});
 
-			var res = { message: {text: 'Can I have details on the object storage container', user: { id: 'mimiron'}}, response: room };
+			let res = { message: {text: 'Can I have details on the object storage container', user: { id: 'mimiron'}}, response: room };
 			room.robot.emit('objectstorage.container.details', res, { containername: TEST_CONTAINER.name});
 		});
 	});
@@ -146,7 +146,7 @@ describe('Interacting with Bluemix services via Slack / Natural Language', funct
 				}
 			});
 
-			var res = { message: {text: 'Can I have details on the object storage container', user: { id: 'mimiron'}}, response: room };
+			let res = { message: {text: 'Can I have details on the object storage container', user: { id: 'mimiron'}}, response: room };
 			room.robot.emit('objectstorage.container.details', res);
 		});
 	});
@@ -169,7 +169,7 @@ describe('Interacting with Bluemix services via Slack / Natural Language', funct
 				}
 			});
 
-			var res = { message: {text: 'Can I have details on the object storage container', user: { id: 'mimiron'}}, response: room };
+			let res = { message: {text: 'Can I have details on the object storage container', user: { id: 'mimiron'}}, response: room };
 			room.robot.emit('objectstorage.container.list', res);
 		});
 	});
@@ -199,7 +199,7 @@ describe('Interacting with Bluemix services via Slack / Natural Language', funct
 				}
 			});
 
-			var res = { message: {text: 'Get an object from the container', user: { id: 'mimiron'}}, response: room };
+			let res = { message: {text: 'Get an object from the container', user: { id: 'mimiron'}}, response: room };
 			room.robot.emit('objectstorage.retrieve.object', res, { containername: TEST_CONTAINER.name, objectname: 'foo.txt'});
 		});
 	});
@@ -227,7 +227,7 @@ describe('Interacting with Bluemix services via Slack / Natural Language', funct
 				done();
 			});
 
-			var res = { message: {text: 'Get an object from the container', user: { id: 'mimiron'}}, response: room };
+			let res = { message: {text: 'Get an object from the container', user: { id: 'mimiron'}}, response: room };
 			room.robot.emit('objectstorage.retrieve.object', res);
 		});
 	});
@@ -284,7 +284,7 @@ describe('Interacting with Bluemix services via Slack / Natural Language', funct
 				done();
 			});
 
-			var res = { message: {text: 'Search for an object in a container', user: { id: 'mimiron'}}, response: room };
+			let res = { message: {text: 'Search for an object in a container', user: { id: 'mimiron'}}, response: room };
 			room.robot.emit('objectstorage.search.object', res);
 		});
 	});
@@ -305,7 +305,7 @@ describe('Interacting with Bluemix services via Slack / Natural Language', funct
 				done();
 			});
 
-			var res = { message: {text: 'What are the objectstorage commands', user: { id: 'mimiron'}}, response: room };
+			let res = { message: {text: 'What are the objectstorage commands', user: { id: 'mimiron'}}, response: room };
 			room.robot.emit('objectstorage.container.help', res);
 		});
 	});
@@ -326,7 +326,7 @@ describe('Interacting with Bluemix services via Slack / Natural Language', funct
 
 			const ParamHelper = require('../src/lib/paramHelper');
 			const env = require('../src/lib/env');
-			var res = { message: {text: '', user: {id: 'mimiron'}}, response: room };
+			let res = { message: {text: '', user: {id: 'mimiron'}}, response: room };
 			let paramHelper = new ParamHelper({
 				robot: room.robot,
 				res: res,
@@ -342,7 +342,7 @@ describe('Interacting with Bluemix services via Slack / Natural Language', funct
 
 		it('should retrieve set of container names', function(done) {
 			const entities = require('../src/lib/objectstore.entities');
-			var res = { message: {text: '', user: {id: 'mimiron'}}, response: room };
+			let res = { message: {text: '', user: {id: 'mimiron'}}, response: room };
 			entities.registerEntityFunctions(storage);
 			entities.getContainerNames(room.robot, res, 'containername', {}).then(function(containerNames) {
 				expect(containerNames.length).to.eql(1);
@@ -354,7 +354,7 @@ describe('Interacting with Bluemix services via Slack / Natural Language', funct
 
 		it('should retrieve set of objects for a container', function(done) {
 			const entities = require('../src/lib/objectstore.entities');
-			var res = { message: {text: '', user: {id: 'mimiron'}}, response: room };
+			let res = { message: {text: '', user: {id: 'mimiron'}}, response: room };
 			entities.registerEntityFunctions(storage);
 			entities.getObjectNames(room.robot, res, 'objectnames', {containername: 'TestContainer'}).then(function(objectNames) {
 				expect(objectNames.length).to.eql(1);
@@ -366,7 +366,7 @@ describe('Interacting with Bluemix services via Slack / Natural Language', funct
 
 		it('should not retrieve set of objects for a container', function(done) {
 			const entities = require('../src/lib/objectstore.entities');
-			var res = { message: {text: '', user: {id: 'mimiron'}}, response: room };
+			let res = { message: {text: '', user: {id: 'mimiron'}}, response: room };
 			entities.registerEntityFunctions(storage);
 			entities.getObjectNames(room.robot, res, 'objectnames', {}).then(function(objectNames) {
 				expect(objectNames.length).to.eql(1);
