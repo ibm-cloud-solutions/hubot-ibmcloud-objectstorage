@@ -235,7 +235,7 @@ function main(params) {
 			classes: [nlcClass]
 		};
 
-		logger.debug(`${TAG}: training statement - ${JSON.stringify(trainingStatement)}`);
+		logger.debug(`${TAG}: ${JSON.stringify(trainingStatement)} - ${docId}`);
 		array.push(trainingStatement);
 	}
 
@@ -292,20 +292,20 @@ function main(params) {
 						}
 
 						if (!url_segments || url_segments.length < 2) {
-							logger.warn(`${TAG}: WARNING - image metadata in cloudant does not have valid url.  Cloudant doc id: ${doc.id}`);
+							logger.warn(`${TAG}: WARNING - image metadata in cloudant does not have valid url.  Cloudant doc id: ${doc._id}`);
 						}
 						else {
 							// Include training data from different doc fields of interest.
 							if (doc.caption) {
-								addTrainingData(doc.id, trainingData, url_segments, doc.caption);
+								addTrainingData(doc._id, trainingData, url_segments, doc.caption);
 							}
 
 							if (doc.location && doc.location.name) {
-								addTrainingData(doc.id, trainingData, url_segments, doc.location.name);
+								addTrainingData(doc._id, trainingData, url_segments, doc.location.name);
 							}
 
 							doc.tags.forEach((tag) => {
-								addTrainingData(doc.id, trainingData, url_segments, tag.label);
+								addTrainingData(doc._id, trainingData, url_segments, tag.label);
 							});
 						}
 					});
