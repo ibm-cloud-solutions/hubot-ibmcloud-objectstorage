@@ -32,7 +32,7 @@ function setClearTokenInterval(objectstorage) {
 			objectstorage.logger.debug(`${TAG}: Invalidating auth token.`);
 			objectstorage.token = undefined;
 		}
-	}, 1000 * 60 * 60 * 6); // invalidate token every 6 hours
+	}, 1000 * 60 * 5); // invalidate token every 5 minutes
 }
 
 
