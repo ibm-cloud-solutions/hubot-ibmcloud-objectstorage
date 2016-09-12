@@ -26,6 +26,13 @@ const settings = {
 	nlc_version: 'v1'
 };
 
+// nlc service bound to application, overrides any other settings.
+if (process.env.VCAP_SERVICES && JSON.parse(process.env.VCAP_SERVICES).natural_language_classifier) {
+	let credentials = JSON.parse(process.env.VCAP_SERVICES).natural_language_classifier[0].credentials;
+	settings.nlc_url = credentials.url;
+	settings.nlc_username = credentials.username;
+	settings.nlc_password = credentials.password;
+}
 
 // gracefully output message and exit if any required config is undefined
 if (!settings.os_auth_url) {
