@@ -70,7 +70,7 @@
 				{
 					"name": "searchphrase",
 					"title": "search phrase",
-					"type": "entity",
+					"type": "wildcard",
 					"prompt": "OK. What is the search phrase?"
 				}
 		  	]
