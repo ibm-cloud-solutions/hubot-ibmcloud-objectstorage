@@ -6,7 +6,7 @@
  */
 'use strict';
 
-const settings = {
+let settings = {
 	os_auth_url: process.env.HUBOT_OBJECT_STORAGE_AUTH_URL,
 	os_user_id: process.env.HUBOT_OBJECT_STORAGE_USER_ID,
 	os_password: process.env.HUBOT_OBJECT_STORAGE_PASSWORD,
