@@ -41,24 +41,19 @@ const i18n = new (require('i18n-2'))({
 i18n.setLocale('en');
 
 let helper;
-let storage;
 module.exports = (robot, res) => {
 	if (!helper) {
-		helper = new Helper({
-			robot: robot,
-			res: res,
-			settings: env
-		});
-		if (helper.initializedSuccessfully()) {
-			storage = helper.getObjectStorage();
-		}
-		else {
-			storage = undefined;
-		}
+		if (env.initSuccess) {
+			helper = new Helper({
+				robot: robot,
+				res: res
+			});
 
-		// Register entity handling functions
-		entities.registerEntityFunctions(storage);
+			// Register entity handling functions
+			entities.registerEntityFunctions();
+		}
 	}
+
 
 	const switchBoard = new Conversation(robot);
 
@@ -85,11 +80,11 @@ module.exports = (robot, res) => {
 
 	// Common code
 	function processObjectRetrieve(robot, res, containerName, objectName) {
-		if (!storage) {
+		if (!env.initSuccess) {
 			// Abort.  objectstore.js reported the error to adapter already.
 			robot.emit('ibmcloud.formatter', {
 				response: res,
-				message: i18n.__('objectstorage.missing.envs', helper.getMissingEnv())
+				message: env.initError
 			});
 			return;
 		}
@@ -116,7 +111,7 @@ module.exports = (robot, res) => {
 				robot.logger.debug(
 					`${TAG}: Selected ${objectDetails.containerName} container and ${objectDetails.objectName} object for retrieve command.`
 				);
-				return storage.getObject(objectDetails.containerName, objectDetails.objectName);
+				return env.objectStorage.getObject(objectDetails.containerName, objectDetails.objectName);
 			})
 			.then((downloadedObject) => {
 				robot.logger.debug(`${TAG}: Temp file created for ${downloadedObject.name} at ${downloadedObject.path}`);

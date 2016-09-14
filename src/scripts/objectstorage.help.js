@@ -19,7 +19,6 @@
 
 const path = require('path');
 const TAG = path.basename(__filename);
-const Helper = require('../lib/paramHelper');
 const env = require('../lib/env');
 
 
@@ -37,24 +36,7 @@ i18n.setLocale('en');
 
 const OBJECTSTORAGE_HELP = /objectstorage+(|s)\s+help/i;
 
-let helper;
-let storage;
-
 module.exports = (robot, res) => {
-	if (!helper) {
-		helper = new Helper({
-			robot: robot,
-			res: res,
-			settings: env
-		});
-		if (helper.initializedSuccessfully()) {
-			storage = helper.getObjectStorage();
-		}
-		else {
-			storage = undefined;
-		}
-	}
-
 	// Natural Language match
 	robot.on('objectstorage.container.help', (res, parameters) => {
 		robot.logger.debug(`${TAG}: Natural Language match.`);
@@ -72,11 +54,11 @@ module.exports = (robot, res) => {
 
 	// Common code
 	function processObjectStorageHelp(robot, res) {
-		if (!storage) {
+		if (!env.initSuccess) {
 			// Abort.  objectstore.js reported the error to adapter already.
 			robot.emit('ibmcloud.formatter', {
 				response: res,
-				message: i18n.__('objectstorage.missing.envs', helper.getMissingEnv())
+				message: env.initError
 			});
 			return;
 		}

@@ -7,7 +7,7 @@
 
 'use strict';
 
-const ObjectStorage = require('./objectstore');
+const env = require('../lib/env');
 const path = require('path');
 const TAG = path.basename(__filename);
 const _ = require('lodash');
@@ -28,42 +28,19 @@ i18n.setLocale('en');
 function ParamHelper(options) {
 	this.robot = options.robot;
 	this.res = options.res;
-	this.logger = this.robot.logger;
-	this.settings = options.settings;
-	this.initSuccess = false;
-	this.storage = new ObjectStorage({
-		robot: this.robot,
-		res: this.res,
-		settings: this.settings
-	});
-	if (!this.storage.initializedSuccessfully()) {
-		this.missingEnv = this.storage.missingEnv;
-		this.storage = undefined;
-	}
-	else {
-		this.initSuccess = true;
-	}
 	return this;
 }
 
 ParamHelper.prototype.initializedSuccessfully = function() {
-	return this.initSuccess;
+	return env.initSuccess;
 };
 
-ParamHelper.prototype.getMissingEnv = function() {
-	return this.missingEnv;
+ParamHelper.prototype.initializationError = function() {
+	return env.initError;
 };
 
 ParamHelper.prototype.isAdapterSupported = function(adapterName) {
-	return _.indexOf(this.settings.supported_adapters, adapterName) !== -1;
-};
-
-ParamHelper.prototype.getObjectStorage = function() {
-	if (!this.initializedSuccessfully()) {
-		return Promise.reject(i18n.__('objectstorage.missing.envs', this.missingEnv));
-	}
-
-	return this.storage;
+	return _.indexOf(env.supported_adapters, adapterName) !== -1;
 };
 
 ParamHelper.prototype.createRangeRegEx = function(start, end) {
@@ -78,7 +55,7 @@ ParamHelper.prototype.createRangeRegEx = function(start, end) {
 
 ParamHelper.prototype.createPromptForSelection = function(context, choices, promptDescription) {
 	if (!this.initializedSuccessfully()) {
-		return Promise.reject(i18n.__('objectstorage.missing.envs', this.missingEnv));
+		return Promise.reject(env.initError);
 	}
 
 	let choiceString = '';
@@ -109,10 +86,10 @@ ParamHelper.prototype.createPromptForSelection = function(context, choices, prom
 
 ParamHelper.prototype.obtainContainerName = function(context, inputName) {
 	if (!this.initializedSuccessfully()) {
-		return Promise.reject(i18n.__('objectstorage.missing.envs', this.missingEnv));
+		return Promise.reject(env.initError);
 	}
 
-	return this.storage.getContainers()
+	return env.objectStorage.getContainers()
 		.then((containers) => {
 			const containerNames = _.map(containers, 'name');
 			if (inputName && inputName.length > 0) {
@@ -139,16 +116,16 @@ ParamHelper.prototype.obtainContainerName = function(context, inputName) {
 
 ParamHelper.prototype.obtainObjectName = function(context, containerName, originalInputName) {
 	if (!this.initializedSuccessfully()) {
-		return Promise.reject(i18n.__('objectstorage.missing.envs', this.missingEnv));
+		return Promise.reject(env.initError);
 	}
 
 	let result = {
 		containerName: containerName
 	};
-	return this.storage.getContainerDetails(containerName)
+	return env.objectStorage.getContainerDetails(containerName)
 		.then((containerDetails) => {
 			let smallerObjects = _.filter(containerDetails.objects, (object) => {
-				return object.bytes <= this.settings.max_file_size;
+				return object.bytes <= env.max_file_size;
 			});
 			const objectNames = _.map(smallerObjects, 'name');
 			if (originalInputName && originalInputName.length > 0) {

@@ -6,68 +6,56 @@
  */
 'use strict';
 
-let settings = {
-	os_auth_url: process.env.HUBOT_OBJECT_STORAGE_AUTH_URL,
-	os_user_id: process.env.HUBOT_OBJECT_STORAGE_USER_ID,
-	os_password: process.env.HUBOT_OBJECT_STORAGE_PASSWORD,
-	os_project_id: process.env.HUBOT_OBJECT_STORAGE_PROJECT_ID,
-	os_bluemix_region: process.env.HUBOT_OBJECT_STORAGE_BLUEMIX_REGION || 'dallas',
-	nlc_url: process.env.VCAP_SERVICES_NATURAL_LANGUAGE_CLASSIFIER_0_CREDENTIALS_URL || process.env.HUBOT_WATSON_NLC_URL,
-	nlc_username: process.env.VCAP_SERVICES_NATURAL_LANGUAGE_CLASSIFIER_0_CREDENTIALS_USERNAME || process.env.HUBOT_WATSON_NLC_USERNAME,
-	nlc_password: process.env.VCAP_SERVICES_NATURAL_LANGUAGE_CLASSIFIER_0_CREDENTIALS_PASSWORD || process.env.HUBOT_WATSON_NLC_PASSWORD,
-	nlc_objectstorage_classifier: process.env.HUBOT_OBJECT_STORAGE_SEARCH_CLASSIFIER_NAME ||
-		'cloudbot-obj-storage-classifier',
-	nlc_search_confidence_min: parseFloat(process.env.HUBOT_OBJECT_STORAGE_SEARCH_CONFIDENCE_MIN) || 0.0,
-	nlc_search_result_limit: parseInt(process.env.HUBOT_OBJECT_STORAGE_SEARCH_RESULT_LIMIT, 10) || 3,
-	nlc_classifier_cleanup_interval: parseInt(process.env.HUBOT_OBJECT_STORAGE_CLASSIFIER_CLEANUP_INTERVAL, 10) || 1000 *
-		60 * 60,
-	max_file_size: (1024 * 1024),
-	supported_adapters: ['slack', 'shell'],
-	nlc_version: 'v1'
-};
+const ObjectStorage = require('hubot-ibmcloud-objectstorage-crawler').objectstorage;
+const SearchEngine = require('hubot-ibmcloud-objectstorage-crawler').osSearchEngine;
 
-// nlc service bound to application, overrides any other settings.
-if (process.env.VCAP_SERVICES && JSON.parse(process.env.VCAP_SERVICES).natural_language_classifier) {
-	let credentials = JSON.parse(process.env.VCAP_SERVICES).natural_language_classifier[0].credentials;
-	settings.nlc_url = credentials.url;
-	settings.nlc_username = credentials.username;
-	settings.nlc_password = credentials.password;
+const i18n = new (require('i18n-2'))({
+	locales: ['en'],
+	extension: '.json',
+	// Add more languages to the list of locales when the files are created.
+	directory: __dirname + '/../messages',
+	defaultLocale: 'en',
+	// Prevent messages file from being overwritten in error conditions (like poor JSON).
+	updateFiles: false
+});
+// At some point we need to toggle this setting based on some user input.
+i18n.setLocale('en');
+
+function init() {
+	let storage = new ObjectStorage();
+	let initError;
+	if (!storage.initializedSuccessfully()) {
+		initError = i18n.__('objectstorage.missing.envs', storage.missingEnv);
+		storage = undefined;
+	}
+
+	let searchEngine = new SearchEngine();
+
+	if (!searchEngine.initializedSuccessfully()) {
+		initError = searchEngine.initializationError();
+		searchEngine = undefined;
+	}
+
+	let tempEnv = {
+		nlc_search_confidence_min: parseFloat(process.env.HUBOT_OBJECT_STORAGE_SEARCH_CONFIDENCE_MIN) || 0.0,
+		nlc_search_result_limit: parseInt(process.env.HUBOT_OBJECT_STORAGE_SEARCH_RESULT_LIMIT, 10) || 3,
+		max_file_size: (1024 * 1024),
+		supported_adapters: ['slack', 'shell']
+	};
+
+	if (storage && searchEngine) {
+		tempEnv.initSuccess = true;
+		tempEnv.objectStorage = storage;
+		tempEnv.searchEngine = searchEngine;
+	}
+	else {
+		tempEnv.initSuccess = false;
+		tempEnv.initError = initError;
+	}
+
+	return tempEnv;
 }
 
-// gracefully output message and exit if any required config is undefined
-if (!settings.os_auth_url) {
-	console.error('HUBOT_OBJECT_STORAGE_AUTH_URL not set');
-}
+let env = init();
 
-if (!settings.os_user_id) {
-	console.error('HUBOT_OBJECT_STORAGE_USER_ID not set');
-}
-
-if (!settings.os_password) {
-	console.error('HUBOT_OBJECT_STORAGE_PASSWORD not set');
-}
-
-if (!settings.os_project_id) {
-	console.error('HUBOT_OBJECT_STORAGE_PROJECT_ID not set');
-}
-
-if (!settings.os_bluemix_region) {
-	console.error('HUBOT_OBJECT_STORAGE_BLUEMIX_REGION not set');
-}
-
-if (!settings.nlc_url) {
-	console.log('HUBOT_WATSON_NLC_URL not set');
-}
-
-if (!settings.nlc_username) {
-	console.log('HUBOT_WATSON_NLC_USERNAME not set');
-}
-if (!settings.nlc_password) {
-	console.log('HUBOT_WATSON_NLC_PASSWORD not set');
-}
-
-if (!settings.nlc_objectstorage_classifier) {
-	console.log('HUBOT_WATSON_NLC_OJBECTSTORAGE_CLASSIFIER_NAME not set');
-}
-
-module.exports = settings;
+module.exports = env;
