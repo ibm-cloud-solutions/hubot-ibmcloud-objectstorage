@@ -15,8 +15,6 @@ const PARAM_CONTAINERNAME = 'containername';
 const PARAM_OBJECTNAMES = 'objectnames';
 
 let functionsRegistered = false;
-let storage;
-
 
 function buildGlobalName(parameterName) {
 	return NAMESPACE + '_' + parameterName;
@@ -26,7 +24,6 @@ function buildGlobalFuncName(parameterName) {
 }
 
 function registerEntityFunctions(inStorage) {
-	if (!storage) storage = inStorage;
 	if (!functionsRegistered) {
 		nlcconfig.setGlobalEntityFunction(buildGlobalFuncName(PARAM_CONTAINERNAME), getContainerNames);
 		nlcconfig.setGlobalEntityFunction(buildGlobalFuncName(PARAM_OBJECTNAMES), getObjectNames);
@@ -36,8 +33,8 @@ function registerEntityFunctions(inStorage) {
 
 function getContainerNames(robot, res, parameterName, parameters) {
 	return new Promise(function(resolve, reject) {
-		if (storage) {
-			storage.getContainers().then((result) => {
+		if (env.objectStorage) {
+			env.objectStorage.getContainers().then((result) => {
 				let containerNames = result.map(function(container){
 					return container.name;
 				});
@@ -55,8 +52,8 @@ function getContainerNames(robot, res, parameterName, parameters) {
 
 function getObjectNames(robot, res, parameterName, parameters) {
 	return new Promise(function(resolve, reject) {
-		if (storage) {
-			storage.getContainerDetails(parameters[PARAM_CONTAINERNAME]).then((containerDetails) => {
+		if (env.objectStorage) {
+			env.objectStorage.getContainerDetails(parameters[PARAM_CONTAINERNAME]).then((containerDetails) => {
 				let smallerObjects = _.filter(containerDetails.objects, (object) => {
 					return object.bytes <= env.max_file_size;
 				});

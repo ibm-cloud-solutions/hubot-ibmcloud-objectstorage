@@ -24,12 +24,10 @@ const env = require('../lib/env');
 const Helper = require('../lib/paramHelper');
 const path = require('path');
 const TAG = path.basename(__filename);
-const Conversation = require('hubot-conversation');
 const _ = require('lodash');
 const activity = require('hubot-ibmcloud-activity-emitter');
-const NLCHelper = require('../lib/nlcHelper');
 
-const i18n = new (require('i18n-2'))({
+const i18n = new(require('i18n-2'))({
 	locales: ['en'],
 	extension: '.json',
 	// Add more languages to the list of locales when the files are created.
@@ -42,33 +40,20 @@ const i18n = new (require('i18n-2'))({
 i18n.setLocale('en');
 
 let helper;
-let storage;
 module.exports = (robot, res) => {
 	if (!helper) {
-		helper = new Helper({
-			robot: robot,
-			res: res,
-			settings: env
-		});
-		if (helper.initializedSuccessfully()) {
-			storage = helper.getObjectStorage();
-		}
-		else {
-			storage = undefined;
+		if (env.initSuccess) {
+			helper = new Helper({
+				robot: robot,
+				res: res
+			});
 		}
 	}
 
-	const switchBoard = new Conversation(robot);
 	let context = {
 		res: res,
-		robot: robot,
-		switchBoard: switchBoard,
-		settings: env
+		robot: robot
 	};
-
-	let nlcHelper = new NLCHelper(context);
-
-	enableClassifierCleanupInterval();
 
 	// Natural Language match
 	robot.on('objectstorage.search.object', (res, parameters) => {
@@ -96,32 +81,20 @@ module.exports = (robot, res) => {
 		processObjectSearch(robot, res, res.match[1]);
 	});
 
-	function enableClassifierCleanupInterval() {
-		if (nlcHelper.initializedSuccessfully()) {
-			context.robot.logger.debug('NLC enabled so classifier will take place');
-			setInterval(() => {
-				nlcHelper.deleteOldClassifiers()
-					.then((result) => {
-						robot.logger.debug('Successfully deleted old classifiers.  ' + JSON.stringify(result, null, 2));
-					})
-					.catch((err) => {
-						robot.logger.error('Problem deleting old classifiers.', err);
-					});
-			}, env.nlc_classifier_cleanup_interval);
-		}
-		else {
-			context.robot.logger.debug('NLC not enabled so classifier cannot take place');
-		}
-	}
-
-	function searchForObject(context, nlcHelper, searchPhrase) {
-		return nlcHelper.classify(searchPhrase)
+	function searchForObject(context, searchPhrase) {
+		return env.searchEngine.classify(searchPhrase)
 			.then((classifierResult) => {
 				let matches = [];
-				if (classifierResult.classes) {
+				if (!classifierResult.search_successful || !classifierResult.classify_result) {
+					// no result returned
+					let error = classifierResult.description ? new Error(classifierResult.description) : new Error(classifierResult);
+					context.robot.logger.error(`${TAG}: No classifiers are available at this time.`, error);
+					return [];
+				}
+				else if (classifierResult.classify_result.classes) {
 					let count = 0;
 					context.robot.logger.debug(`${TAG}: Classify results for searchPhrase ${searchPhrase}`);
-					_.forEach(classifierResult.classes, (classifier) => {
+					_.forEach(classifierResult.classify_result.classes, (classifier) => {
 						context.robot.logger.debug(`${TAG}:  classify results:  ` + JSON.stringify(classifier));
 						let path = classifier.class_name.split('/');
 						if (classifier.confidence >= env.nlc_search_confidence_min) {
@@ -147,20 +120,11 @@ module.exports = (robot, res) => {
 
 	// Common code
 	function processObjectSearch(robot, res, searchPhrase) {
-		if (!storage) {
+		if (!env.initSuccess) {
 			// Abort.  objectstore.js reported the error to adapter already.
 			robot.emit('ibmcloud.formatter', {
 				response: res,
-				message: i18n.__('objectstorage.missing.envs', helper.getMissingEnv())
-			});
-			return;
-		}
-
-		if (!nlcHelper.initializedSuccessfully()) {
-			// Abort.  objectstore.js reported the error to adapter already.
-			robot.emit('ibmcloud.formatter', {
-				response: res,
-				message: i18n.__('objectstorage.missing.envs', nlcHelper.getMissingEnv())
+				message: env.initError
 			});
 			return;
 		}
@@ -173,7 +137,7 @@ module.exports = (robot, res) => {
 			return;
 		}
 
-		searchForObject(context, nlcHelper, searchPhrase)
+		searchForObject(context, searchPhrase)
 			.then((objectList) => {
 				let downloadPromises = [];
 				downloadPromises.push(Promise.resolve(objectList));
@@ -181,11 +145,12 @@ module.exports = (robot, res) => {
 					robot.logger.debug(
 						`${TAG}: Downloading ${objectDetails.containerName} container and ${objectDetails.objectName} object for search command.`
 					);
-					downloadPromises.push(storage.getObject(objectDetails.containerName, objectDetails.objectName).catch((err) => {
-						robot.logger.error(
-							`${TAG}: Object storage did not contain an object named '${objectDetails.objectName}' in the container '${objectDetails.containerName}'.  Error: `,
-							err);
-					}));
+					downloadPromises.push(env.objectStorage.getObject(objectDetails.containerName, objectDetails.objectName).catch(
+						(err) => {
+							robot.logger.error(
+								`${TAG}: Object storage did not contain an object named '${objectDetails.objectName}' in the container '${objectDetails.containerName}'.  Error: `,
+								err);
+						}));
 				});
 				return Promise.all(downloadPromises);
 			})

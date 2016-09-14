@@ -333,7 +333,7 @@ describe('Interacting with Bluemix services via Slack / Natural Language', funct
 				settings: env
 			});
 			if (paramHelper.initializedSuccessfully()) {
-				storage = paramHelper.getObjectStorage();
+				storage = env.objectStorage;
 			}
 			else {
 				storage = undefined;

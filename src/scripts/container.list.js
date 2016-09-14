@@ -43,19 +43,13 @@ const i18n = new (require('i18n-2'))({
 i18n.setLocale('en');
 
 let helper;
-let storage;
 module.exports = (robot, res) => {
 	if (!helper) {
-		helper = new Helper({
-			robot: robot,
-			res: res,
-			settings: env
-		});
-		if (helper.initializedSuccessfully()) {
-			storage = helper.getObjectStorage();
-		}
-		else {
-			storage = undefined;
+		if (env.initSuccess) {
+			helper = new Helper({
+				robot: robot,
+				res: res
+			});
 		}
 	}
 
@@ -76,16 +70,16 @@ module.exports = (robot, res) => {
 
 	// Common code
 	function processContainerList(robot, res) {
-		if (!storage) {
+		if (!env.initSuccess) {
 			// Abort.  objectstore.js reported the error to adapter already.
 			robot.emit('ibmcloud.formatter', {
 				response: res,
-				message: i18n.__('objectstorage.missing.envs', helper.getMissingEnv())
+				message: env.initError
 			});
 			return;
 		}
 
-		storage.getContainers()
+		env.objectStorage.getContainers()
 			.then((containers) => {
 				const attachments = _.map(containers, (container) => {
 					const attachment = {
