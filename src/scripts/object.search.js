@@ -89,6 +89,12 @@ module.exports = (robot, res) => {
 					// no result returned
 					let error = classifierResult.description ? new Error(classifierResult.description) : new Error(classifierResult);
 					context.robot.logger.error(`${TAG}: No classifiers are available at this time.`, error);
+
+					robot.emit('ibmcloud.formatter', {
+						response: res,
+						message: classifierResult.description
+					});
+
 					return [];
 				}
 				else if (classifierResult.classify_result.classes) {

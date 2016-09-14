@@ -28,7 +28,6 @@ i18n.setLocale('en');
 function ParamHelper(options) {
 	this.robot = options.robot;
 	this.res = options.res;
-	this.logger = this.robot.logger;
 	return this;
 }
 
@@ -37,7 +36,7 @@ ParamHelper.prototype.initializedSuccessfully = function() {
 };
 
 ParamHelper.prototype.initializationError = function() {
-	return this.initError;
+	return env.initError;
 };
 
 ParamHelper.prototype.isAdapterSupported = function(adapterName) {
