@@ -77,7 +77,7 @@ module.exports = (robot, res) => {
 	});
 
 	function searchForObject(context, searchPhrase) {
-		return env.searchEngine.classify(searchPhrase)
+		return env.searchEngine.classify(searchPhrase, true)
 			.then((classifierResult) => {
 				let matches = [];
 				if (!classifierResult.search_successful || !classifierResult.classify_result) {
@@ -195,8 +195,9 @@ module.exports = (robot, res) => {
 			.catch((error) => {
 				robot.logger.error(
 					`${TAG}: Failed to find objects`, error);
-				robot.logger.error(
-					`${TAG}: Failed to find objects`, error.stack);
+				if (error.stack)
+					robot.logger.error(
+						`${TAG}: Failed to find objects`, error.stack);
 
 				robot.emit('ibmcloud.formatter', {
 					response: res,
