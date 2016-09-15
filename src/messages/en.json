@@ -31,6 +31,10 @@
 	"objectstorage.retrieve.error": "Failed to retrieve object",
 	"objectstorage.retrieve.nosupported.adapter": "'%s' adapter does not currently support the objectstorage retrieve command.",
 
+	"objectstorage.scan.error": "Failed to scan Object Storage",
+	"objectstorage.scan.status.error": "Failed to obtain Object Storage scan status",
+	"objectstorage.index.error": "Failed to index Object Storage",
+
 	"conversation.timed.out": "Our conversation timed out.  You can try again later.",
 	"conversation.try.again.or.exit": "That is not one of the choices. Try again, or type *exit*.",
 	"conversation.try.again.yes.no": "That is not one of the choices. Try *yes* or *no*."
