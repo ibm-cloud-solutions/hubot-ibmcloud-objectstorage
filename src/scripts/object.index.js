@@ -69,7 +69,20 @@ module.exports = (robot, res) => {
 			return;
 		}
 
-		env.searchEngine.index()
+		let commandContext = {
+			robot: robot,
+			res: res
+		};
+
+		let callback = function(callbackContext, error) {
+			callbackContext.robot.emit('ibmcloud.formatter', {
+				response: callbackContext.res,
+				message: i18n.__('objectstorage.scan.index.complete')
+			});
+
+		};
+
+		env.searchEngine.index(callback, commandContext)
 			.then((indexResult) => {
 				robot.emit('ibmcloud.formatter', {
 					response: res,

@@ -70,11 +70,17 @@ module.exports = (robot, res) => {
 		}
 
 		env.searchEngine.getEngineStatus()
-			.then((indexResult) => {
-				console.log(indexResult);
+			.then((scanStatusResult) => {
+				console.log(scanStatusResult);
+				let scanStartTimestamp = scanStatusResult.scanStartTimestamp ? scanStatusResult.scanStartTimestamp : i18n.__('objectstorage.scan.status');
+				let indexStartTimestamp = scanStatusResult.indexStartTimestamp ? scanStatusResult.indexStartTimestamp : i18n.__('objectstorage.scan.status');
+
+				let message = i18n.__('objectstorage.scan.status.lastscan', scanStartTimestamp);
+				message += '\n';
+				message += i18n.__('objectstorage.scan.status.lastindex', indexStartTimestamp);
 				robot.emit('ibmcloud.formatter', {
 					response: res,
-					message: indexResult.description
+					message: message
 				});
 			})
 			.catch((error) => {

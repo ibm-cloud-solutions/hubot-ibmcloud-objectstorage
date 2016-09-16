@@ -33,6 +33,10 @@
 
 	"objectstorage.scan.error": "Failed to scan Object Storage",
 	"objectstorage.scan.status.error": "Failed to obtain Object Storage scan status",
+	"objectstorage.scan.status.lastscan": "Last scan run on %s",
+	"objectstorage.scan.status.lastindex": "Last index run on %s",
+	"objectstorage.scan.index.complete": "Watson Natural Language Classifier training has completed.",
+	"objectstorage.scan.status": "Never",
 	"objectstorage.index.error": "Failed to index Object Storage",
 
 	"conversation.timed.out": "Our conversation timed out.  You can try again later.",
