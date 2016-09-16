@@ -12,6 +12,8 @@
 
 /* eslint quote-props:0, quotes:0*/
 
+const env = require('../src/lib/env');
+const FakeTagGenerator = require('./fakeTagGenerator');
 const Helper = require('hubot-test-helper');
 const helper = new Helper('../src/scripts');
 const expect = require('chai').expect;
@@ -106,8 +108,7 @@ describe('Test test via Slack', function() {
 
 	let room;
 
-	before(function() {
-		// nock.disableNetConnect();
+	function doNock(){
 		nock(nlc_url).get('/v1/classifiers').reply(200, {
 			classifiers: [{
 				"classifier_id": "good",
@@ -116,6 +117,27 @@ describe('Test test via Slack', function() {
 				"language": "en",
 				"created": "2016-08-22T15:08:28.176Z"
 			}]
+		});
+
+		nock(nlc_url).post('/v1/classifiers', {}).reply(201,
+			{
+				"classifier_id": "good2",
+				"url": "https://foo.com/v1/classifiers/good2",
+				"name": "cloudbot-obj-storage-classifier",
+				"language": "en",
+				"status": "Training",
+				"created": "2016-08-22T15:08:28.176Z"
+			}
+		);
+
+		nock(nlc_url).get('/v1/classifiers/good2').reply(200, {
+			"classifier_id": "good2",
+			"name": "cloudbot-obj-storage-classifier",
+			"language": "en",
+			"created": "2016-08-10T15:08:28.176Z",
+			"url": "https://foo.com/v1/classifiers/goods",
+			"status": "Training",
+			"status_description": "The classifier instance is now available and is ready to take classifier requests."
 		});
 
 		nock(nlc_url).get('/v1/classifiers/good').reply(200, {
@@ -156,12 +178,17 @@ describe('Test test via Slack', function() {
 		nock(FAKE_OBJECT_STORAGE_ENDPOINT).head('/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[0].title).query({
 			format: 'json'
 		}).reply(200, '', mockObjectMetadata);
+	}
 
-
+	before(function() {
 	});
 
 	beforeEach(function() {
 		room = helper.createRoom();
+
+		doNock();
+
+
 		// Force all emits into a reply.
 		room.robot.on('ibmcloud.formatter', function(event) {
 			if (event.message) {
@@ -182,13 +209,33 @@ describe('Test test via Slack', function() {
 	context('user calls `objectstorage scan`', function() {
 		it('should respond with the scan results', function(done) {
 			room.user.say('mimiron', '@hubot objectstorage scan').then(() => {
-				console.log(room.messages);
 				return waitForMessageQueue(room, 2).then(() => {
-					console.log(room.messages);
-					// Great.  Move on to tests
 					expect(room.messages.length).to.eql(2);
 					expect(room.messages[1][1]).to.be.a('string');
 					expect(room.messages[1][1]).to.equal('@mimiron ' + 'Object Storage scan complete.  Changes since last indexing: 1 added, 0 removed.  Please run index command to process the changes.');
+					done();
+				});
+			});
+		});
+
+		it('should respond with the scan status results', function(done) {
+			room.user.say('mimiron', '@hubot objectstorage scan status').then(() => {
+				return waitForMessageQueue(room, 2).then(() => {
+					expect(room.messages.length).to.eql(2);
+					expect(room.messages[1][1]).to.be.a('string');
+					expect(room.messages[1][1]).to.include('@mimiron ' + 'Last scan run on');
+					done();
+				});
+			});
+		});
+
+		it('should respond with the index results', function(done) {
+			env.searchEngine.tagGenerators = [new FakeTagGenerator()];
+			room.user.say('mimiron', '@hubot objectstorage index').then(() => {
+				return waitForMessageQueue(room, 2).then(() => {
+					expect(room.messages.length).to.eql(2);
+					expect(room.messages[1][1]).to.be.a('string');
+					expect(room.messages[1][1]).to.equal('@mimiron ' + 'NLC training for Object Storage started successfully.');
 					done();
 				});
 			});
