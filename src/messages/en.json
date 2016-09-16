@@ -36,6 +36,7 @@
 	"objectstorage.scan.status.lastscan": "Last scan run on %s",
 	"objectstorage.scan.status.lastindex": "Last index run on %s",
 	"objectstorage.scan.index.complete": "Watson Natural Language Classifier training has completed.",
+	"objectstorage.scan.index.error": "Watson Natural Language Classifier training has failed.  See logs.",
 	"objectstorage.scan.status": "Never",
 	"objectstorage.index.error": "Failed to index Object Storage",
 

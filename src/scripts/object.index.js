@@ -75,11 +75,20 @@ module.exports = (robot, res) => {
 		};
 
 		let callback = function(callbackContext, error) {
-			callbackContext.robot.emit('ibmcloud.formatter', {
-				response: callbackContext.res,
-				message: i18n.__('objectstorage.scan.index.complete')
-			});
-
+			if (error) {
+				robot.logger.error(
+					`${TAG}: Failed to index object storage`, error);
+				callbackContext.robot.emit('ibmcloud.formatter', {
+					response: callbackContext.res,
+					message: i18n.__('objectstorage.scan.index.error')
+				});
+			}
+			else {
+				callbackContext.robot.emit('ibmcloud.formatter', {
+					response: callbackContext.res,
+					message: i18n.__('objectstorage.scan.index.complete')
+				});
+			}
 		};
 
 		env.searchEngine.index(callback, commandContext)
