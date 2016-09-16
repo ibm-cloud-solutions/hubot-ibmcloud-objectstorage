@@ -71,7 +71,6 @@ module.exports = (robot, res) => {
 
 		env.searchEngine.getEngineStatus()
 			.then((scanStatusResult) => {
-				console.log(scanStatusResult);
 				let scanStartTimestamp = scanStatusResult.scanStartTimestamp ? scanStatusResult.scanStartTimestamp : i18n.__('objectstorage.scan.status');
 				let indexStartTimestamp = scanStatusResult.indexStartTimestamp ? scanStatusResult.indexStartTimestamp : i18n.__('objectstorage.scan.status');
 

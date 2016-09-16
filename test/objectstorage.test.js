@@ -375,7 +375,6 @@ describe('Test test via Slack', function() {
 			room.user.say('mimiron', '@hubot objectstorage search ocean with cats')
 				.then(() => {
 					return waitForMessageQueue(room, 2).then(() => {
-						console.log(room.messages);
 						expect(room.messages[1]).to.eql(['hubot', '@mimiron ' + i18n.__('objectstore.search.object.no.results')]);
 						done();
 					});
@@ -410,7 +409,6 @@ describe('Test test via Slack', function() {
 			room.user.say('mimiron', '@hubot objectstorage search ocean with waves')
 				.then(() => {
 					return waitForMessageQueue(room, 2).then(() => {
-						console.log(room.messages);
 						expect(room.messages[1]).to.eql(['hubot', '@mimiron ' + i18n.__('objectstore.search.object.no.results')]);
 						done();
 					});
@@ -425,7 +423,6 @@ describe('Test test via Slack', function() {
 			room.user.say('mimiron', '@hubot objectstorage search ocean with waves')
 				.then(() => {
 					return waitForMessageQueue(room, 2).then(() => {
-						console.log(room.messages);
 						expect(room.messages[1]).to.eql(['hubot', '@mimiron ' + i18n.__('objectstore.search.object.no.results')]);
 						done();
 					});
@@ -460,7 +457,6 @@ describe('Test test via Slack', function() {
 			room.user.say('mimiron', '@hubot objectstorage search ocean with waves')
 				.then(() => {
 					return waitForMessageQueue(room, 2).then(() => {
-						console.log(room.messages);
 						expect(room.messages[1]).to.eql(['hubot', '@mimiron ' + i18n.__('objectstore.search.object.no.results')]);
 						done();
 					});
