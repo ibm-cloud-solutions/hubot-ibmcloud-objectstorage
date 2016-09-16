@@ -1,12 +1,7 @@
 // Description:
-//	Always listening, waiting to translate
+//	Always listening, waiting to give details of Object Storage container
 //
 // Configuration:
-// HUBOT_OBJECT_STORAGE_AUTH_URL The Auth URL provided by Object Storage service
-// HUBOT_OBJECT_STORAGE_USER_ID The Object Storage user id
-// HUBOT_OBJECT_STORAGE_PASSWORD The Objeect Storage password
-// HUBOT_OBJECT_STORAGE_PROJECT_ID The Object Storage project id
-// HUBOT_OBJECT_STORAGE_BLUEMIX_REGION The bluemix region you wish to target.  For example dallas.
 //
 // Author:
 //  @kholdaway

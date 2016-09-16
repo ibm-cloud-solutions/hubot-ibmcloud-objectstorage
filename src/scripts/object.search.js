@@ -1,12 +1,7 @@
 // Description:
-//	Always listening, waiting to translate
+//	Always listening, waiting to search containers for files
 //
 // Configuration:
-// HUBOT_OBJECT_STORAGE_AUTH_URL The Auth URL provided by Object Storage service
-// HUBOT_OBJECT_STORAGE_USER_ID The Object Storage user id
-// HUBOT_OBJECT_STORAGE_PASSWORD The Objeect Storage password
-// HUBOT_OBJECT_STORAGE_PROJECT_ID The Object Storage project id
-// HUBOT_OBJECT_STORAGE_BLUEMIX_REGION The bluemix region you wish to target.  For example dallas.
 //
 // Author:
 //  @kholdaway
@@ -82,7 +77,7 @@ module.exports = (robot, res) => {
 	});
 
 	function searchForObject(context, searchPhrase) {
-		return env.searchEngine.classify(searchPhrase)
+		return env.searchEngine.classify(searchPhrase, true)
 			.then((classifierResult) => {
 				let matches = [];
 				if (!classifierResult.search_successful || !classifierResult.classify_result) {
@@ -200,8 +195,9 @@ module.exports = (robot, res) => {
 			.catch((error) => {
 				robot.logger.error(
 					`${TAG}: Failed to find objects`, error);
-				robot.logger.error(
-					`${TAG}: Failed to find objects`, error.stack);
+				if (error.stack)
+					robot.logger.error(
+						`${TAG}: Failed to find objects`, error.stack);
 
 				robot.emit('ibmcloud.formatter', {
 					response: res,
