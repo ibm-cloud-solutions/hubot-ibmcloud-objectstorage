@@ -97,27 +97,37 @@ module.exports = (robot, res) => {
 					context.robot.logger.debug(`${TAG}: Classify results for searchPhrase ${searchPhrase}`);
 					_.forEach(classifierResult.classify_result.classes, (classifier) => {
 						let previous = (count === 0) ? undefined : classifierResult.classify_result.classes[count - 1];
-						let confidenceDifference = (!previous) ? 0 : previous.confidence - classifier.confidence;
-						context.robot.logger.debug(`${TAG}:  classify results:  ` + JSON.stringify(classifier));
-						if (confidenceDifference < env.nlc_search_diff_confidence_max) {
-							let path = classifier.class_name.split('/');
+						if (!previous || (previous.confidence && classifier.confidence)) {
+							let confidenceDifference = (!previous) ? 0 : previous.confidence - classifier.confidence;
+							context.robot.logger.debug(`${TAG}:  classify results:  ` + JSON.stringify(classifier));
+							if (confidenceDifference < env.nlc_search_diff_confidence_max) {
+								let path = classifier.class_name.split('/');
 
-							// This search result is close enough to the previous result to be related.
-							let training_data = classifier.training_data ? _.uniq(classifier.training_data) : [];
-							matches.push({
-								containerName: path[1],
-								objectName: path[2],
-								confidence: classifier.confidence,
-								training_data: training_data
-							});
-							count++;
+								// This search result is close enough to the previous result to be related.
+								let training_data = classifier.training_data ? _.uniq(classifier.training_data) : [];
+								matches.push({
+									containerName: path[1],
+									objectName: path[2],
+									confidence: classifier.confidence,
+									training_data: training_data
+								});
+							}
+							else {
+								// done since there was a large gap in confidence
+								context.robot.logger.debug(
+									`${TAG}: Found gap in confidence all other results will be filtered.  Gap: ${confidenceDifference}`);
+								return false;
+							}
 						}
 						else {
 							// done since there was a large gap in confidence
-							context.robot.logger.debug(`${TAG}: Found gap in confidence all other results will be filtered.  Gap: ${confidenceDifference}`);
+							context.robot.logger.debug(
+								`${TAG}: Invalid response from Watson.  Missing confidence.`);
 							return false;
+
 						}
 					});
+					count++;
 				}
 
 				if (matches.length > 0) {
