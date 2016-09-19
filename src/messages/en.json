@@ -26,6 +26,8 @@
 
 	"objectstore.search.object": "The following files matched your search: ",
 	"objectstore.search.object.no.results": "Nothing matched your search",
+	"objectstore.search.object.confidence": "Confidence: %s%%",
+	"objectstore.search.object.keywords": "Keywords: %s",
 
 	"objectstore.retrieve.object": "Sending object file '%s' to adapter.",
 	"objectstorage.retrieve.error": "Failed to retrieve object",

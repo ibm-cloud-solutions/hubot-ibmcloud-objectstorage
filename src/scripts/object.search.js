@@ -99,10 +99,12 @@ module.exports = (robot, res) => {
 						context.robot.logger.debug(`${TAG}:  classify results:  ` + JSON.stringify(classifier));
 						let path = classifier.class_name.split('/');
 						if (classifier.confidence >= env.nlc_search_confidence_min) {
+							let training_data = classifier.training_data ? _.uniq(classifier.training_data) : [];
 							matches.push({
 								containerName: path[1],
 								objectName: path[2],
-								confidence: classifier.confidence
+								confidence: classifier.confidence,
+								training_data: training_data
 							});
 							count++;
 							if (count >= env.nlc_search_result_limit)
@@ -158,8 +160,10 @@ module.exports = (robot, res) => {
 			.then((allDownloadedObjects) => {
 				let objectList = allDownloadedObjects.shift();
 				let confidenceMap = {};
+				let trainingDataMap = {};
 				_.forEach(objectList, (objectDetails) => {
 					confidenceMap[objectDetails.objectName] = Math.round(objectDetails.confidence * 10000) / 100;
+					trainingDataMap[objectDetails.objectName] = objectDetails.training_data;
 				});
 				let downloadedObjects = _.filter(allDownloadedObjects, (downloadedObject) => {
 					return downloadedObject && _.isObject(downloadedObject);
@@ -173,11 +177,22 @@ module.exports = (robot, res) => {
 					let i = 1;
 					_.forEach(downloadedObjects, (downloadedObject) => {
 						robot.logger.debug(`${TAG}: Temp file created for ${downloadedObject.name} at ${downloadedObject.path}`);
+						let keywordString = '';
+						_.forEach(trainingDataMap[downloadedObject.name], (word) => {
+							keywordString += word.toLowerCase() + ', ';
+						});
+						if (keywordString === '')
+							keywordString = 'None';
+						else {
+							keywordString = keywordString.substring(0, keywordString.length - 2);
+						}
 						robot.emit('ibmcloud.formatter', {
 							response: res,
 							fileName: downloadedObject.name,
 							filePath: downloadedObject.path,
-							message: `(${i}) ${downloadedObject.name} matches with a confidence of ${confidenceMap[downloadedObject.name]}%`
+							message: downloadedObject.name,
+							initial_comment: i18n.__('objectstore.search.object.confidence', confidenceMap[
+								downloadedObject.name]) + '\n' + i18n.__('objectstore.search.object.keywords', keywordString)
 						});
 						i++;
 					});
