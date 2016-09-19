@@ -176,7 +176,6 @@ module.exports = (robot, res) => {
 					});
 					let i = 1;
 					_.forEach(downloadedObjects, (downloadedObject) => {
-						// trainingDataMap[downloadedObject.name]
 						robot.logger.debug(`${TAG}: Temp file created for ${downloadedObject.name} at ${downloadedObject.path}`);
 						let keywordString = '';
 						_.forEach(trainingDataMap[downloadedObject.name], (word) => {
@@ -191,7 +190,7 @@ module.exports = (robot, res) => {
 							response: res,
 							fileName: downloadedObject.name,
 							filePath: downloadedObject.path,
-							message: `${downloadedObject.name}`,
+							message: downloadedObject.name,
 							initial_comment: i18n.__('objectstore.search.object.confidence', confidenceMap[
 								downloadedObject.name]) + '\n' + i18n.__('objectstore.search.object.keywords', keywordString)
 						});
