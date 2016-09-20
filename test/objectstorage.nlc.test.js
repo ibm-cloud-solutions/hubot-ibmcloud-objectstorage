@@ -19,6 +19,7 @@ const helper = new Helper('../src/scripts');
 const expect = require('chai').expect;
 const sprinkles = require('mocha-sprinkles');
 const nock = require('nock');
+const osNock = require('./resources/objectstorage.nock');
 
 const nlc_url = process.env.HUBOT_WATSON_NLC_URL;
 
@@ -48,47 +49,6 @@ function waitForMessageQueue(room, len) {
 		expect(room.messages.length).to.eql(len);
 	});
 }
-
-
-const HUBOT_OBJECT_STORAGE_AUTH_URL = process.env.HUBOT_OBJECT_STORAGE_AUTH_URL;
-const FAKE_OBJECT_STORAGE_ENDPOINT = 'http://storestuff.com';
-const TEST_CONTAINER = {
-	name: 'TestContainer',
-	bytes: '1024',
-	count: 54
-};
-
-const TEST_CONTAINER_OBJECTS = {
-	name: 'foo.txt',
-	bytes: '1024',
-	last_modified: 'yesterday',
-	hash: 'ASDFdsfsdf',
-	content_type: 'text'
-};
-
-const TEST_CONTAINER_OBJECTS_ATTACHMENT = {
-	"attachments": [{
-		"color": "#555",
-		"fields": [{
-			"short": true,
-			"title": "size",
-			"value": "1.00K"
-		}, {
-			"short": true,
-			"title": "last modified",
-			"value": "yesterday"
-		}, {
-			"short": true,
-			"title": "content type",
-			"value": "text"
-		}, {
-			"short": true,
-			"title": "hash",
-			"value": "ASDFdsfsdf"
-		}],
-		"title": "foo.txt"
-	}]
-};
 
 const mockObjectMetadata = {
 	"Accept-Ranges": "bytes",
@@ -150,14 +110,14 @@ describe('Test test via Slack', function() {
 			"status_description": "The classifier instance is now available and is ready to take classifier requests."
 		});
 
-		nock(HUBOT_OBJECT_STORAGE_AUTH_URL).post('/v3/auth/tokens', {}).reply(200, {
+		nock(osNock.osAuthUrl).post('/v3/auth/tokens', {}).reply(200, {
 			token: {
 				catalog: [{
 					type: 'object-store',
 					endpoints: [{
 						region: 'dallas',
 						interface: 'public',
-						url: FAKE_OBJECT_STORAGE_ENDPOINT
+						url: osNock.osEndpoint
 					}]
 				}]
 			}
@@ -165,17 +125,17 @@ describe('Test test via Slack', function() {
 			'x-subject-token': 'longrandomstring'
 		});
 
-		nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/').query({
+		nock(osNock.osEndpoint).get('/').query({
 			format: 'json'
-		}).reply(200, [TEST_CONTAINER]);
+		}).reply(200, [osNock.testContainer]);
 
-		nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/' + TEST_CONTAINER.name).query({
+		nock(osNock.osEndpoint).get('/' + osNock.testContainer.name).query({
 			format: 'json'
-		}).reply(200, [TEST_CONTAINER_OBJECTS]);
-		nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[0].title).query({
+		}).reply(200, [osNock.testContainerObjects]);
+		nock(osNock.osEndpoint).get('/' + osNock.testContainer.name + '/' + osNock.testContainerObjectAttachment.attachments[0].title).query({
 			format: 'json'
 		}).reply(200, 'This is the text');
-		nock(FAKE_OBJECT_STORAGE_ENDPOINT).head('/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[0].title).query({
+		nock(osNock.osEndpoint).head('/' + osNock.testContainer.name + '/' + osNock.testContainerObjectAttachment.attachments[0].title).query({
 			format: 'json'
 		}).reply(200, '', mockObjectMetadata);
 	}
