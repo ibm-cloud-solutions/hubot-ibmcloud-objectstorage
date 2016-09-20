@@ -90,29 +90,52 @@ module.exports = (robot, res) => {
 						message: classifierResult.description
 					});
 
-					return [];
+					return matches;
 				}
 				else if (classifierResult.classify_result.classes) {
 					let count = 0;
 					context.robot.logger.debug(`${TAG}: Classify results for searchPhrase ${searchPhrase}`);
 					_.forEach(classifierResult.classify_result.classes, (classifier) => {
-						context.robot.logger.debug(`${TAG}:  classify results:  ` + JSON.stringify(classifier));
-						let path = classifier.class_name.split('/');
-						if (classifier.confidence >= env.nlc_search_confidence_min) {
-							let training_data = classifier.training_data ? _.uniq(classifier.training_data) : [];
-							matches.push({
-								containerName: path[1],
-								objectName: path[2],
-								confidence: classifier.confidence,
-								training_data: training_data
-							});
-							count++;
-							if (count >= env.nlc_search_result_limit)
+						let previous = (count === 0) ? undefined : classifierResult.classify_result.classes[count - 1];
+						if (!previous || (previous.confidence && classifier.confidence)) {
+							let confidenceDifference = (!previous) ? 0 : previous.confidence - classifier.confidence;
+							context.robot.logger.debug(`${TAG}:  classify results:  ` + JSON.stringify(classifier));
+							if (confidenceDifference < env.nlc_search_diff_confidence_max) {
+								let path = classifier.class_name.split('/');
+
+								// This search result is close enough to the previous result to be related.
+								let training_data = classifier.training_data ? _.uniq(classifier.training_data) : [];
+								matches.push({
+									containerName: path[1],
+									objectName: path[2],
+									confidence: classifier.confidence,
+									training_data: training_data
+								});
+							}
+							else {
+								// done since there was a large gap in confidence
+								context.robot.logger.debug(
+									`${TAG}: Found gap in confidence all other results will be filtered.  Gap: ${confidenceDifference}`);
 								return false;
+							}
+						}
+						else {
+							// done since there was a large gap in confidence
+							context.robot.logger.debug(
+								`${TAG}: Invalid response from Watson.  Missing confidence.`);
+							return false;
+
 						}
 					});
+					count++;
 				}
-				context.robot.logger.debug(`${TAG}: Found the following classifier matches: ` + JSON.stringify(matches));
+
+				if (matches.length > 0) {
+					context.robot.logger.debug(`${TAG}: Found the following classifier matches: ` + JSON.stringify(matches));
+				}
+				else {
+					context.robot.logger.debug(`${TAG}: No classifier matches found `);
+				}
 				return matches;
 			})
 			.catch((error) => {

@@ -37,8 +37,7 @@ function init() {
 	}
 
 	let tempEnv = {
-		nlc_search_confidence_min: parseFloat(process.env.HUBOT_OBJECT_STORAGE_SEARCH_CONFIDENCE_MIN) || 0.0,
-		nlc_search_result_limit: parseInt(process.env.HUBOT_OBJECT_STORAGE_SEARCH_RESULT_LIMIT, 10) || 3,
+		nlc_search_diff_confidence_max: parseFloat(process.env.HUBOT_OBJECT_STORAGE_SEARCH_DIFF_CONFIDENCE_MAX) || 0.5,
 		max_file_size: (1024 * 1024),
 		supported_adapters: ['slack', 'shell']
 	};
