@@ -11,6 +11,7 @@ const Helper = require('hubot-test-helper');
 const helper = new Helper('../src/scripts');
 const expect = require('chai').expect;
 const nock = require('nock');
+const osNock = require('./resources/objectstorage.nock');
 
 const i18n = new (require('i18n-2'))({
 	locales: ['en'],
@@ -27,45 +28,6 @@ i18n.setLocale('en');
 /* eslint quote-props:0, quotes:0*/
 
 const NLC_URL = process.env.VCAP_SERVICES_NATURAL_LANGUAGE_CLASSIFIER_0_CREDENTIALS_URL || process.env.HUBOT_WATSON_NLC_URL;
-const HUBOT_OBJECT_STORAGE_AUTH_URL = process.env.HUBOT_OBJECT_STORAGE_AUTH_URL;
-const FAKE_OBJECT_STORAGE_ENDPOINT = 'http://storestuff.com';
-const TEST_CONTAINER = {
-	name: 'TestContainer',
-	bytes: '1024',
-	count: 54
-};
-
-const TEST_CONTAINER_OBJECTS = {
-	name: 'foo.txt',
-	bytes: '1024',
-	last_modified: 'yesterday',
-	hash: 'ASDFdsfsdf',
-	content_type: 'text'
-};
-
-const TEST_CONTAINER_OBJECTS_ATTACHMENT = {
-	"attachments": [{
-		"color": "#555",
-		"fields": [{
-			"short": true,
-			"title": "size",
-			"value": "1.00K"
-		}, {
-			"short": true,
-			"title": "last modified",
-			"value": "yesterday"
-		}, {
-			"short": true,
-			"title": "content type",
-			"value": "text"
-		}, {
-			"short": true,
-			"title": "hash",
-			"value": "ASDFdsfsdf"
-		}],
-		"title": "foo.txt"
-	}]
-};
 
 // Passing arrow functions to mocha is discouraged: https://mochajs.org/#arrow-functions
 // return promises from mocha tests rather than calling done() - http://tobyho.com/2015/12/16/mocha-with-promises/
@@ -79,18 +41,7 @@ describe('Interacting with Bluemix services via Slack / Natural Language', funct
 	beforeEach(function() {
 		room = helper.createRoom();
 		// Before all
-		nock(HUBOT_OBJECT_STORAGE_AUTH_URL).post('/v3/auth/tokens', {}).reply(200, {
-			token: {
-				catalog: [{
-					type: 'object-store',
-					endpoints: [{
-						region: 'dallas',
-						interface: 'public',
-						url: FAKE_OBJECT_STORAGE_ENDPOINT
-					}]
-				}]
-			}
-		}, {
+		nock(osNock.osAuthUrl).post('/v3/auth/tokens', {}).reply(200, osNock.osAuthPayload, {
 			'x-subject-token': 'longrandomstring'
 		});
 	});
@@ -102,26 +53,26 @@ describe('Interacting with Bluemix services via Slack / Natural Language', funct
 	// ------------------------------------------------------
 	// Test: container details
 	// ------------------------------------------------------
-	context('Container details - user says `Can I have details on the object storage container` ' + TEST_CONTAINER.name, function() {
+	context('Container details - user says `Can I have details on the object storage container` ' + osNock.testContainer.name, function() {
 		beforeEach(function() {
-			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/').query({
+			nock(osNock.osEndpoint).get('/').query({
 				format: 'json'
-			}).reply(200, [TEST_CONTAINER]);
-			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/' + TEST_CONTAINER.name).query({
+			}).reply(200, [osNock.testContainer]);
+			nock(osNock.osEndpoint).get('/' + osNock.testContainer.name).query({
 				format: 'json'
-			}).reply(200, [TEST_CONTAINER_OBJECTS]);
+			}).reply(200, [osNock.testContainerObjects]);
 		});
 		it('should recognize command and prompt for a name', function(done) {
 			// Listens for dialog response.
 			room.robot.on('ibmcloud.formatter', (event) => {
 				if (event.message) {
-					expect(event.message).to.eql(i18n.__('objectstorage.list.objects', TEST_CONTAINER.name));
+					expect(event.message).to.eql(i18n.__('objectstorage.list.objects', osNock.testContainer.name));
 					done();
 				}
 			});
 
 			let res = { message: {text: 'Can I have details on the object storage container', user: { id: 'mimiron'}}, response: room };
-			room.robot.emit('objectstorage.container.details', res, { containername: TEST_CONTAINER.name});
+			room.robot.emit('objectstorage.container.details', res, { containername: osNock.testContainer.name});
 		});
 	});
 
@@ -130,12 +81,12 @@ describe('Interacting with Bluemix services via Slack / Natural Language', funct
 	// ------------------------------------------------------
 	context('Container details - user says `Can I have details on the object storage container (no parameter)', function() {
 		beforeEach(function() {
-			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/').query({
+			nock(osNock.osEndpoint).get('/').query({
 				format: 'json'
-			}).reply(200, [TEST_CONTAINER]);
-			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/' + TEST_CONTAINER.name).query({
+			}).reply(200, [osNock.testContainer]);
+			nock(osNock.osEndpoint).get('/' + osNock.testContainer.name).query({
 				format: 'json'
-			}).reply(200, [TEST_CONTAINER_OBJECTS]);
+			}).reply(200, [osNock.testContainerObjects]);
 		});
 		it('should recognize command and prompt for a name', function(done) {
 			// Listens for dialog response.
@@ -156,9 +107,9 @@ describe('Interacting with Bluemix services via Slack / Natural Language', funct
 	// ------------------------------------------------------
 	context('Container list - user says `Show me the object storage containers', function() {
 		beforeEach(function() {
-			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/').query({
+			nock(osNock.osEndpoint).get('/').query({
 				format: 'json'
-			}).reply(200, [TEST_CONTAINER]);
+			}).reply(200, [osNock.testContainer]);
 		});
 		it('should recognize command and present a list of containers', function(done) {
 			// Listens for dialog response.
@@ -180,13 +131,13 @@ describe('Interacting with Bluemix services via Slack / Natural Language', funct
 	context('Object retrieve - user says `Get an object from the container', function() {
 		beforeEach(function() {
 			room.robot.adapterName = 'slack';
-			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/').query({
+			nock(osNock.osEndpoint).get('/').query({
 				format: 'json'
-			}).reply(200, [TEST_CONTAINER]);
-			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/' + TEST_CONTAINER.name).query({
+			}).reply(200, [osNock.testContainer]);
+			nock(osNock.osEndpoint).get('/' + osNock.testContainer.name).query({
 				format: 'json'
-			}).reply(200, [TEST_CONTAINER_OBJECTS]);
-			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[0].title).query({
+			}).reply(200, [osNock.testContainerObjects]);
+			nock(osNock.osEndpoint).get('/' + osNock.testContainer.name + '/' + osNock.testContainerObjectAttachment.attachments[0].title).query({
 				format: 'json'
 			}).reply(200, 'This is the text');
 		});
@@ -200,7 +151,7 @@ describe('Interacting with Bluemix services via Slack / Natural Language', funct
 			});
 
 			let res = { message: {text: 'Get an object from the container', user: { id: 'mimiron'}}, response: room };
-			room.robot.emit('objectstorage.retrieve.object', res, { containername: TEST_CONTAINER.name, objectname: 'foo.txt'});
+			room.robot.emit('objectstorage.retrieve.object', res, { containername: osNock.testContainer.name, objectname: 'foo.txt'});
 		});
 	});
 
@@ -210,13 +161,13 @@ describe('Interacting with Bluemix services via Slack / Natural Language', funct
 	context('Object retrieve - user says `Get an object from the container (missing parameters)', function() {
 		beforeEach(function() {
 			room.robot.adapterName = 'slack';
-			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/').query({
+			nock(osNock.osEndpoint).get('/').query({
 				format: 'json'
-			}).reply(200, [TEST_CONTAINER]);
-			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/' + TEST_CONTAINER.name).query({
+			}).reply(200, [osNock.testContainer]);
+			nock(osNock.osEndpoint).get('/' + osNock.testContainer.name).query({
 				format: 'json'
-			}).reply(200, [TEST_CONTAINER_OBJECTS]);
-			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[0].title).query({
+			}).reply(200, [osNock.testContainerObjects]);
+			nock(osNock.osEndpoint).get('/' + osNock.testContainer.name + '/' + osNock.testContainerObjectAttachment.attachments[0].title).query({
 				format: 'json'
 			}).reply(200, 'This is the text');
 		});
@@ -235,13 +186,13 @@ describe('Interacting with Bluemix services via Slack / Natural Language', funct
 	context('user calls `objectstorage search`', function() {
 		beforeEach(function() {
 			room.robot.adapterName = 'slack';
-			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/').query({
+			nock(osNock.osEndpoint).get('/').query({
 				format: 'json'
-			}).reply(200, [TEST_CONTAINER]);
-			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/' + TEST_CONTAINER.name).query({
+			}).reply(200, [osNock.testContainer]);
+			nock(osNock.osEndpoint).get('/' + osNock.testContainer.name).query({
 				format: 'json'
-			}).reply(200, [TEST_CONTAINER_OBJECTS]);
-			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[0].title).query({
+			}).reply(200, [osNock.testContainerObjects]);
+			nock(osNock.osEndpoint).get('/' + osNock.testContainer.name + '/' + osNock.testContainerObjectAttachment.attachments[0].title).query({
 				format: 'json'
 			}).reply(200, 'This is the text');
 			nock(NLC_URL).get('/v1/classifiers').reply(200, {classifiers: [
@@ -269,9 +220,9 @@ describe('Interacting with Bluemix services via Slack / Natural Language', funct
 				classifier_id: 'good',
 				url: 'https://foo.com/v1/classifiers/good',
 				text: 'ocean with birds',
-				top_class: '/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[0].title,
+				top_class: '/' + osNock.testContainer.name + '/' + osNock.testContainerObjectAttachment.attachments[0].title,
 				classes: [{
-					class_name: '/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[0].title,
+					class_name: '/' + osNock.testContainer.name + '/' + osNock.testContainerObjectAttachment.attachments[0].title,
 					confidence: 0.8865453325314453
 				}]
 			});
@@ -314,13 +265,13 @@ describe('Interacting with Bluemix services via Slack / Natural Language', funct
 		let storage;
 
 		beforeEach(function() {
-			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/').query({
+			nock(osNock.osEndpoint).get('/').query({
 				format: 'json'
-			}).reply(200, [TEST_CONTAINER]);
-			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/' + TEST_CONTAINER.name).query({
+			}).reply(200, [osNock.testContainer]);
+			nock(osNock.osEndpoint).get('/' + osNock.testContainer.name).query({
 				format: 'json'
-			}).reply(200, [TEST_CONTAINER_OBJECTS]);
-			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[0].title).query({
+			}).reply(200, [osNock.testContainerObjects]);
+			nock(osNock.osEndpoint).get('/' + osNock.testContainer.name + '/' + osNock.testContainerObjectAttachment.attachments[0].title).query({
 				format: 'json'
 			}).reply(200, 'This is the text');
 

@@ -79,7 +79,7 @@ module.exports = {
 	osEndpoint: osEndpoint,
 	osAuthPayload: osAuthPayload,
 	testContainer: testContainer,
-	testContainerObject: testContainerObjects,
+	testContainerObjects: testContainerObjects,
 	testContainerAttachment: testContainerAttachment,
 	testContainerObjectAttachment: testContainerObjectAttachment
 };
