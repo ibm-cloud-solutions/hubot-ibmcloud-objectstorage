@@ -15,10 +15,9 @@
 const Helper = require('hubot-test-helper');
 const helper = new Helper('../src/scripts');
 const expect = require('chai').expect;
-// const rewire = require('rewire');
-// const objectstorageAPI = rewire('../src/scripts/objectstorage');
 const sprinkles = require('mocha-sprinkles');
 const nock = require('nock');
+const osNock = require('./resources/objectstorage.nock');
 
 const i18n = new (require('i18n-2'))({
 	locales: ['en'],
@@ -34,62 +33,7 @@ i18n.setLocale('en');
 
 const timeout = 5000;
 
-const HUBOT_OBJECT_STORAGE_AUTH_URL = process.env.HUBOT_OBJECT_STORAGE_AUTH_URL;
 const NLC_URL = process.env.VCAP_SERVICES_NATURAL_LANGUAGE_CLASSIFIER_0_CREDENTIALS_URL || process.env.HUBOT_WATSON_NLC_URL;
-const FAKE_OBJECT_STORAGE_ENDPOINT = 'http://storestuff.com';
-const TEST_CONTAINER = {
-	name: 'TestContainer',
-	bytes: '1024',
-	count: 54
-};
-
-const TEST_CONTAINER_OBJECTS = {
-	name: 'foo.txt',
-	bytes: '1024',
-	last_modified: 'yesterday',
-	hash: 'ASDFdsfsdf',
-	content_type: 'text'
-};
-
-const TEST_CONTAINER_ATTACHMENT = {
-	"attachments": [{
-		"color": "#555",
-		"fields": [{
-			"short": true,
-			"title": "size",
-			"value": "1.00K"
-		}, {
-			"short": true,
-			"title": "file count",
-			"value": "54"
-		}],
-		"title": "TestContainer"
-	}]
-};
-
-const TEST_CONTAINER_OBJECTS_ATTACHMENT = {
-	"attachments": [{
-		"color": "#555",
-		"fields": [{
-			"short": true,
-			"title": "size",
-			"value": "1.00K"
-		}, {
-			"short": true,
-			"title": "last modified",
-			"value": "yesterday"
-		}, {
-			"short": true,
-			"title": "content type",
-			"value": "text"
-		}, {
-			"short": true,
-			"title": "hash",
-			"value": "ASDFdsfsdf"
-		}],
-		"title": "foo.txt"
-	}]
-};
 
 function waitForMessageQueue(room, len) {
 	return sprinkles.eventually({
@@ -115,18 +59,7 @@ describe('Test test via Slack', function() {
 	beforeEach(function() {
 		room = helper.createRoom();
 		// Before all
-		nock(HUBOT_OBJECT_STORAGE_AUTH_URL).post('/v3/auth/tokens', {}).reply(200, {
-			token: {
-				catalog: [{
-					type: 'object-store',
-					endpoints: [{
-						region: 'dallas',
-						interface: 'public',
-						url: FAKE_OBJECT_STORAGE_ENDPOINT
-					}]
-				}]
-			}
-		}, {
+		nock(osNock.osAuthUrl).post('/v3/auth/tokens', {}).reply(200, osNock.osAuthPayload, {
 			'x-subject-token': 'longrandomstring'
 		});
 		// Force all emits into a reply.
@@ -148,9 +81,9 @@ describe('Test test via Slack', function() {
 
 	context('user calls `objectstorage container list`', function() {
 		beforeEach(function() {
-			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/').query({
+			nock(osNock.osEndpoint).get('/').query({
 				format: 'json'
-			}).reply(200, [TEST_CONTAINER]);
+			}).reply(200, [osNock.testContainer]);
 			return room.user.say('mimiron', '@hubot objectstorage container list');
 		});
 
@@ -160,20 +93,20 @@ describe('Test test via Slack', function() {
 				expect(room.messages.length).to.eql(3);
 				expect(room.messages[1][1]).to.be.a('string');
 				expect(room.messages[1][1]).to.equal('@mimiron ' + i18n.__('objectstorage.list.containers'));
-				expect(room.messages[2][1]).to.deep.equal(TEST_CONTAINER_ATTACHMENT);
+				expect(room.messages[2][1]).to.deep.equal(osNock.testContainerAttachment);
 			});
 		});
 	});
 
 	context('user calls `objectstorage container details containerName`', function() {
 		beforeEach(function() {
-			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/').query({
+			nock(osNock.osEndpoint).get('/').query({
 				format: 'json'
-			}).reply(200, [TEST_CONTAINER]);
-			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/' + TEST_CONTAINER.name).query({
+			}).reply(200, [osNock.testContainer]);
+			nock(osNock.osEndpoint).get('/' + osNock.testContainer.name).query({
 				format: 'json'
-			}).reply(200, [TEST_CONTAINER_OBJECTS]);
-			return room.user.say('mimiron', '@hubot objectstorage container details ' + TEST_CONTAINER.name);
+			}).reply(200, [osNock.testContainerObjects]);
+			return room.user.say('mimiron', '@hubot objectstorage container details ' + osNock.testContainer.name);
 		});
 
 		it('should respond with the list of container objects', function() {
@@ -181,8 +114,8 @@ describe('Test test via Slack', function() {
 				// Great.  Move on to tests
 				expect(room.messages.length).to.eql(3);
 				expect(room.messages[1][1]).to.be.a('string');
-				expect(room.messages[1][1]).to.equal('@mimiron ' + i18n.__('objectstorage.list.objects', TEST_CONTAINER.name));
-				expect(room.messages[2][1]).to.deep.equal(TEST_CONTAINER_OBJECTS_ATTACHMENT);
+				expect(room.messages[1][1]).to.equal('@mimiron ' + i18n.__('objectstorage.list.objects', osNock.testContainer.name));
+				expect(room.messages[2][1]).to.deep.equal(osNock.testContainerObjectAttachment);
 			});
 		});
 	});
@@ -190,13 +123,13 @@ describe('Test test via Slack', function() {
 	context('user calls `objectstorage retrieve`', function() {
 		beforeEach(function() {
 			room.robot.adapterName = 'slack';
-			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/').query({
+			nock(osNock.osEndpoint).get('/').query({
 				format: 'json'
-			}).reply(200, [TEST_CONTAINER]);
-			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/' + TEST_CONTAINER.name).query({
+			}).reply(200, [osNock.testContainer]);
+			nock(osNock.osEndpoint).get('/' + osNock.testContainer.name).query({
 				format: 'json'
-			}).reply(200, [TEST_CONTAINER_OBJECTS]);
-			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[
+			}).reply(200, [osNock.testContainerObjects]);
+			nock(osNock.osEndpoint).get('/' + osNock.testContainer.name + '/' + osNock.testContainerObjectAttachment.attachments[
 				0].title).query({
 				format: 'json'
 			}).reply(200, 'This is the text');
@@ -225,13 +158,13 @@ describe('Test test via Slack', function() {
 		});
 
 		it('should search and upload results to adapter', function(done) {
-			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/').query({
+			nock(osNock.osEndpoint).get('/').query({
 				format: 'json'
-			}).reply(200, [TEST_CONTAINER]);
-			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/' + TEST_CONTAINER.name).query({
+			}).reply(200, [osNock.testContainer]);
+			nock(osNock.osEndpoint).get('/' + osNock.testContainer.name).query({
 				format: 'json'
-			}).reply(200, [TEST_CONTAINER_OBJECTS]);
-			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[
+			}).reply(200, [osNock.testContainerObjects]);
+			nock(osNock.osEndpoint).get('/' + osNock.testContainer.name + '/' + osNock.testContainerObjectAttachment.attachments[
 				0].title).query({
 				format: 'json'
 			}).reply(200, 'This is the text');
@@ -262,9 +195,9 @@ describe('Test test via Slack', function() {
 				classifier_id: 'good',
 				url: 'https://foo.com/v1/classifiers/good',
 				text: 'ocean with birds',
-				top_class: '/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[0].title,
+				top_class: '/' + osNock.testContainer.name + '/' + osNock.testContainerObjectAttachment.attachments[0].title,
 				classes: [{
-					class_name: '/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[0].title,
+					class_name: '/' + osNock.testContainer.name + '/' + osNock.testContainerObjectAttachment.attachments[0].title,
 					confidence: 0.8865453325314453
 				}]
 			});
@@ -280,13 +213,13 @@ describe('Test test via Slack', function() {
 		});
 
 		it('should search and upload results to adapter (2 available classifiers, 1 unauthorized)', function(done) {
-			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/').query({
+			nock(osNock.osEndpoint).get('/').query({
 				format: 'json'
-			}).reply(200, [TEST_CONTAINER]);
-			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/' + TEST_CONTAINER.name).query({
+			}).reply(200, [osNock.testContainer]);
+			nock(osNock.osEndpoint).get('/' + osNock.testContainer.name).query({
 				format: 'json'
-			}).reply(200, [TEST_CONTAINER_OBJECTS]);
-			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[
+			}).reply(200, [osNock.testContainerObjects]);
+			nock(osNock.osEndpoint).get('/' + osNock.testContainer.name + '/' + osNock.testContainerObjectAttachment.attachments[
 				0].title).query({
 				format: 'json'
 			}).reply(200, 'This is the text');
@@ -348,9 +281,9 @@ describe('Test test via Slack', function() {
 				classifier_id: 'good',
 				url: 'https://foo.com/v1/classifiers/good',
 				text: 'ocean with birds',
-				top_class: '/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[0].title,
+				top_class: '/' + osNock.testContainer.name + '/' + osNock.testContainerObjectAttachment.attachments[0].title,
 				classes: [{
-					class_name: '/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[0].title,
+					class_name: '/' + osNock.testContainer.name + '/' + osNock.testContainerObjectAttachment.attachments[0].title,
 					confidence: 0.8865453325314453
 				}]
 			});
@@ -466,13 +399,13 @@ describe('Test test via Slack', function() {
 		});
 
 		it('should respond without results (classifiers missing object storage file)', function(done) {
-			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/').query({
+			nock(osNock.osEndpoint).get('/').query({
 				format: 'json'
-			}).reply(200, [TEST_CONTAINER]);
-			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/' + TEST_CONTAINER.name).query({
+			}).reply(200, [osNock.testContainer]);
+			nock(osNock.osEndpoint).get('/' + osNock.testContainer.name).query({
 				format: 'json'
-			}).reply(200, [TEST_CONTAINER_OBJECTS]);
-			nock(FAKE_OBJECT_STORAGE_ENDPOINT).get('/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[
+			}).reply(200, [osNock.testContainerObjects]);
+			nock(osNock.osEndpoint).get('/' + osNock.testContainer.name + '/' + osNock.testContainerObjectAttachment.attachments[
 				0].title).query({
 				format: 'json'
 			}).reply(404);
@@ -503,9 +436,9 @@ describe('Test test via Slack', function() {
 				classifier_id: 'good',
 				url: 'https://foo.com/v1/classifiers/good',
 				text: 'ocean with birds',
-				top_class: '/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[0].title,
+				top_class: '/' + osNock.testContainer.name + '/' + osNock.testContainerObjectAttachment.attachments[0].title,
 				classes: [{
-					class_name: '/' + TEST_CONTAINER.name + '/' + TEST_CONTAINER_OBJECTS_ATTACHMENT.attachments[0].title,
+					class_name: '/' + osNock.testContainer.name + '/' + osNock.testContainerObjectAttachment.attachments[0].title,
 					confidence: 0.8865453325314453
 				}]
 			});
