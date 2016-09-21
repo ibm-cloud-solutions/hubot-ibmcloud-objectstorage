@@ -5,6 +5,7 @@
 		{
 			"class": "objectstorage.container.details",
 			"description": "Show details about an object storage container",
+			"confirmprompt": "Would you like to see details for the ${containername} object storage container (yes or no)?",
 			"emittarget": "objectstorage.container.details",
 			"texts": [
 				"Give me details on an object storage container",
@@ -23,6 +24,7 @@
 		{
 			"class": "objectstorage.container.list",
 			"description": "List the object storage containers",
+			"confirmprompt": "Would you like to list the object storage containers (yes or no)?",
 			"emittarget": "objectstorage.container.list",
 			"texts": [
 				"List the object storage containers",
@@ -33,6 +35,7 @@
 		{
 			"class": "objectstorage.retrieve.object",
 			"description": "Retrieve an object from object storage container",
+			"confirmprompt": "Would you like to retrieve ${objectname} from the ${containername} object storage container (yes or no)?",
 			"emittarget": "objectstorage.retrieve.object",
 			"texts": [
 				"Retrieve my object from a container",
@@ -59,6 +62,7 @@
 		{
 			"class": "objectstorage.search.object",
 			"description": "Search for an object from object storage container",
+			"confirmprompt": "Would you like to search object storage for ${searchphrase} (yes or no)?",
 			"emittarget": "objectstorage.search.object",
 			"texts": [
 				"Search for an object in a container",
@@ -78,6 +82,7 @@
 		{
 			"class": "objectstorage.container.help",
 			"description": "Help with object storage",
+			"confirmprompt": "Would you like help with object storage (yes or no)?",
 			"emittarget": "objectstorage.container.help",
 			"texts": [
 				"I need help on the objectstorage command",
