@@ -15,11 +15,8 @@
 const Helper = require('hubot-test-helper');
 const helper = new Helper('../src/scripts');
 const expect = require('chai').expect;
-// const rewire = require('rewire');
-// const objectstorageAPI = rewire('../src/scripts/objectstorage');
 const sprinkles = require('mocha-sprinkles');
 const nock = require('nock');
-// const portend = require('portend');
 const osNock = require('./resources/objectstorage.nock');
 
 const i18n = new (require('i18n-2'))({
